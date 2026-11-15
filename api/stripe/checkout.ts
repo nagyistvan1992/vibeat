@@ -70,8 +70,8 @@ export default async function handler(req: any, res: any) {
 
     const successHash =
       returnSlug && returnSlug !== 'elofizetes'
-        ? `#/r/${encodeURIComponent(returnSlug)}?checkout=success`
-        : '#/profil?checkout=success';
+        ? `#/r/${encodeURIComponent(returnSlug)}?checkout=success&session_id={CHECKOUT_SESSION_ID}`
+        : '#/profil?checkout=success&session_id={CHECKOUT_SESSION_ID}';
     const cancelHash =
       returnSlug && returnSlug !== 'elofizetes'
         ? `#/r/${encodeURIComponent(returnSlug)}?checkout=canceled`

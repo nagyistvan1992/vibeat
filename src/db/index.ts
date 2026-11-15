@@ -267,6 +267,13 @@ export async function getRecipeForUser(
   };
 }
 
+const isFallbackEmail = (email?: string | null, id?: string): boolean => {
+  if (!email) return true;
+  if (email.endsWith('@clerk.user')) return true;
+  if (id && (email === `${id}@atelierculinary.hu` || email === `${id}@vebeat.ro`)) return true;
+  return false;
+};
+
 export async function getUserById(userId: string): Promise<UserSubscriptionRecord | null> {
   if (!userId) return null;
   const conn = getDb();
@@ -292,6 +299,7 @@ export async function getUserById(userId: string): Promise<UserSubscriptionRecor
       return null;
     } catch (err) {
       console.error('[Vercel Postgres] getUserById error:', err);
+      throw err;
     }
   }
   const local = readLocalUsers();
@@ -300,7 +308,7 @@ export async function getUserById(userId: string): Promise<UserSubscriptionRecor
 
 export async function upsertUserSubscription(params: {
   id: string;
-  email: string;
+  email?: string;
   subscription_status?: SubscriptionStatus;
   stripe_customer_id?: string | null;
   subscription_end_date?: Date | null;
@@ -311,18 +319,43 @@ export async function upsertUserSubscription(params: {
     try {
       const existing = await getUserById(params.id);
       if (!existing) {
-        await conn.db.insert(schema.users).values({
-          id: params.id,
-          email: params.email,
-          subscriptionStatus: status,
-          stripeCustomerId: params.stripe_customer_id ?? null,
-          subscriptionEndDate: params.subscription_end_date ?? null,
-        });
+        const insertEmail = params.email || `${params.id}@clerk.user`;
+        const byEmail = await conn.db
+          .select()
+          .from(schema.users)
+          .where(eq(schema.users.email, insertEmail))
+          .limit(1);
+
+        if (byEmail[0] && !byEmail[0].stripeCustomerId && byEmail[0].subscriptionStatus === 'free') {
+          await conn.db
+            .update(schema.users)
+            .set({
+              id: params.id,
+              subscriptionStatus: status,
+              stripeCustomerId: params.stripe_customer_id ?? null,
+              subscriptionEndDate: params.subscription_end_date ?? null,
+            })
+            .where(eq(schema.users.email, insertEmail));
+        } else {
+          await conn.db.insert(schema.users).values({
+            id: params.id,
+            email: insertEmail,
+            subscriptionStatus: status,
+            stripeCustomerId: params.stripe_customer_id ?? null,
+            subscriptionEndDate: params.subscription_end_date ?? null,
+          });
+        }
       } else {
+        const nextEmail =
+          params.email &&
+          (!isFallbackEmail(params.email, params.id) || isFallbackEmail(existing.email, params.id))
+            ? params.email
+            : existing.email;
+
         await conn.db
           .update(schema.users)
           .set({
-            email: params.email || existing.email,
+            email: nextEmail,
             subscriptionStatus: params.subscription_status ?? existing.subscription_status,
             stripeCustomerId:
               params.stripe_customer_id !== undefined
@@ -339,16 +372,24 @@ export async function upsertUserSubscription(params: {
       }
       const updated = await getUserById(params.id);
       if (updated) return updated;
+      throw new Error(`User ${params.id} could not be read back after upsert`);
     } catch (err) {
       console.error('[Vercel Postgres] upsertUserSubscription error:', err);
+      throw err;
     }
   }
 
   const local = readLocalUsers();
   const prev = local[params.id];
+  const nextLocalEmail =
+    params.email &&
+    (!prev || !isFallbackEmail(params.email, params.id) || isFallbackEmail(prev.email, params.id))
+      ? params.email
+      : prev?.email || `${params.id}@vebeat.ro`;
+
   const record: UserSubscriptionRecord = {
     id: params.id,
-    email: params.email || prev?.email || `${params.id}@atelierculinary.hu`,
+    email: nextLocalEmail,
     subscription_status: params.subscription_status ?? prev?.subscription_status ?? 'free',
     stripe_customer_id:
       params.stripe_customer_id !== undefined
@@ -373,7 +414,7 @@ export async function updateSubscriptionByStripeCustomer(params: {
   const conn = getDb();
   if (conn) {
     try {
-      await conn.db
+      const updatedRows = await conn.db
         .update(schema.users)
         .set({
           subscriptionStatus: params.subscription_status,
@@ -381,10 +422,12 @@ export async function updateSubscriptionByStripeCustomer(params: {
             ? { subscriptionEndDate: params.subscription_end_date }
             : {}),
         })
-        .where(eq(schema.users.stripeCustomerId, params.stripe_customer_id));
-      return true;
+        .where(eq(schema.users.stripeCustomerId, params.stripe_customer_id))
+        .returning({ id: schema.users.id });
+      return updatedRows.length > 0;
     } catch (err) {
       console.error('[Vercel Postgres] updateSubscriptionByStripeCustomer error:', err);
+      throw err;
     }
   }
   const local = readLocalUsers();

@@ -134,7 +134,6 @@ export default async function handler(req: any, res: any) {
         if (clerkUserId) {
           await upsertUserSubscription({
             id: clerkUserId,
-            email: `${clerkUserId}@atelierculinary.hu`,
             subscription_status: mappedStatus,
             stripe_customer_id: customerId,
             subscription_end_date: subscriptionEndDate,
@@ -160,7 +159,6 @@ export default async function handler(req: any, res: any) {
         if (clerkUserId) {
           await upsertUserSubscription({
             id: clerkUserId,
-            email: `${clerkUserId}@atelierculinary.hu`,
             subscription_status: 'canceled',
             stripe_customer_id: customerId,
             subscription_end_date: new Date(),

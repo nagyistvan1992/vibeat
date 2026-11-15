@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useContext, createContext } from 'react';
+import React, { useEffect, useRef, useState, useContext, createContext } from 'react';
 import {
   PLANS,
   siteFooterHtml,
@@ -388,6 +388,10 @@ export function App() {
   const clerk = useContext(ClerkBridgeContext);
   const clerkMountRef = useRef<HTMLDivElement | null>(null);
   const appRef = useRef<HTMLElement | null>(null);
+  const [clerkAuthView, setClerkAuthView] = useState<{ open: boolean; reg: boolean }>({
+    open: false,
+    reg: false,
+  });
 
   useEffect(() => {
     const $app = appRef.current!;
@@ -422,9 +426,11 @@ export function App() {
 
     const getAuthHeaders = async (): Promise<Record<string, string>> => {
       const headers: Record<string, string> = {};
-      if (clerk.enabled && clerk.isSignedIn) {
-        const tok = await clerk.getToken();
-        if (tok) headers['Authorization'] = `Bearer ${tok}`;
+      if (clerk.enabled) {
+        if (clerk.isSignedIn) {
+          const tok = await clerk.getToken();
+          if (tok) headers['Authorization'] = `Bearer ${tok}`;
+        }
       } else if (S.user) {
         const devId =
           S.user.id ||
@@ -443,6 +449,7 @@ export function App() {
     const isFav = (id: string) => S.favs.includes(id);
     const servingsOf = (r: any) => S.servings[r.id] || r.servings || 2;
     const hasSub = () => currentSubscriptionStatus === 'active';
+    const isUserSignedIn = () => (clerk.enabled ? clerk.isSignedIn : Boolean(S.user));
 
     function amountText(ing: any, r: any) {
       if (ing.qty == null) return ing.unit;
@@ -707,12 +714,15 @@ export function App() {
     }
 
     /* ---------- Backend API Sync (/api/recipes, /api/recipes/[slug], /api/me, /api/stripe/*) ---------- */
-    async function syncMeAndRecipes() {
+    async function syncMeAndRecipes(sessionId = '') {
       try {
         const headers = await getAuthHeaders();
+        const meUrl = sessionId
+          ? `/api/me?session_id=${encodeURIComponent(sessionId)}`
+          : '/api/me';
         const [recipesRes, meRes] = await Promise.all([
           fetch(`/api/recipes?lang=${S.lang}`),
-          fetch('/api/me', { headers }),
+          fetch(meUrl, { headers }),
         ]);
         if (recipesRes.ok) {
           const data = await recipesRes.json();
@@ -756,7 +766,7 @@ export function App() {
     }
 
     async function startStripeCheckout(returnSlug = '', plan: 'monthly' | 'yearly' = selectedPlan) {
-      const signedIn = (clerk.enabled && clerk.isSignedIn) || Boolean(S.user);
+      const signedIn = isUserSignedIn();
       if (!signedIn) {
         toast(tr('Az előfizetés indításához kérlek jelentkezz be!', 'Conectează-te pentru a începe abonamentul!'));
         goReplace(`#/belepes?return=${encodeURIComponent(returnSlug || 'elofizetes')}`);
@@ -840,8 +850,10 @@ export function App() {
 
     /* ---------- UI Components ---------- */
     const activeUserName = () =>
-      clerk.enabled && clerk.isSignedIn
-        ? clerk.fullName || clerk.email || 'Séf'
+      clerk.enabled
+        ? clerk.isSignedIn
+          ? clerk.fullName || clerk.email || 'Séf'
+          : null
         : S.user?.name || null;
 
     const langName = (l: 'hu' | 'ro') => (l === 'ro' ? 'Română' : 'Magyar');
@@ -1075,7 +1087,7 @@ export function App() {
     function activeCookBanner() {
       const items = Object.entries(S.progress as Record<string, { step: number; at: number }>)
         .map(([id, p]) => ({ r: get(id), step: p?.step || 1, at: p?.at || 0 }))
-        .filter(x => x.r && x.step >= 1)
+        .filter(x => x.r && x.step >= 1 && Boolean(x.r.is_free || x.r.mine || hasSub()))
         .sort((a, b) => b.at - a.at);
       if (!items.length) return '';
       return `<section class="flex flex-col gap-2" aria-label="${tr('Folyamatban lévő főzés', 'Gătit în curs')}">
@@ -1511,7 +1523,7 @@ export function App() {
 
     /* ---------- Paywall Overlay Component for Locked Recipes ---------- */
     function paywallSection(r: any) {
-      const signedIn = (clerk.enabled && clerk.isSignedIn) || Boolean(S.user);
+      const signedIn = isUserSignedIn();
       const ingCount = r.ingredient_count || 6;
       const stepCount = r.step_count || 3;
 
@@ -1641,7 +1653,7 @@ export function App() {
     }
 
     function viewSubscription({ q }: { q: URLSearchParams }) {
-      const signedIn = (clerk.enabled && clerk.isSignedIn) || Boolean(S.user);
+      const signedIn = isUserSignedIn();
       const returnSlug = q.get('return') || '';
       const qp = q.get('plan');
       if (qp === 'yearly' || qp === 'monthly') selectedPlan = qp;
@@ -2591,10 +2603,13 @@ export function App() {
               ),
       };
 
-      const signedIn = (clerk.enabled && clerk.isSignedIn) || Boolean(S.user);
+      const signedIn = isUserSignedIn();
       const uName = activeUserName() || tr('Kovács Eszter (Vendég)', 'Oaspete Vebeat');
-      const uEmail =
-        (clerk.enabled && clerk.email) || S.user?.email || tr('Nincs bejelentkezve', 'Neautentificat');
+      const uEmail = clerk.enabled
+        ? clerk.isSignedIn
+          ? clerk.email || tr('Nincs bejelentkezve', 'Neautentificat')
+          : tr('Nincs bejelentkezve', 'Neautentificat')
+        : S.user?.email || tr('Nincs bejelentkezve', 'Neautentificat');
 
       return (
         titleHeader(tr('Profil & Előfizetés', 'Profil & Abonament')) +
@@ -2927,41 +2942,53 @@ export function App() {
           }">${tr('Regisztráció', 'Înregistrare')}</a>
         </div>
 
-        <form data-form="auth" data-reg="${reg}" data-return="${esc(
-          returnSlug
-        )}" novalidate class="bg-surface-container-lowest rounded-xl p-4 shadow-sm flex flex-col gap-3.5 border border-outline-variant/30">
-          ${
-            reg
-              ? `<label class="block bg-surface-container-low rounded-xl px-4 pt-2 pb-1.5 border border-transparent focus-within:border-secondary focus-within:bg-surface-container-lowest">
-            <span class="flex items-center gap-1 text-label-sm uppercase text-secondary">${icon(
-              'person',
-              'text-[15px]'
-            )}${tr('Teljes név', 'Nume complet')}</span>
-            <input id="name" name="name" type="text" required maxlength="60" autocomplete="name" placeholder="${tr('Kovács Eszter', 'Elena Popescu')}" class="w-full bg-transparent py-1 text-body-md focus:outline-none">
-          </label>`
+        ${
+          clerk.enabled
+            ? clerk.isSignedIn
+              ? `<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm text-center border border-outline-variant/30 flex flex-col items-center gap-2">
+                  <p class="text-title-md text-primary">${tr('Bejelentkezve, átirányítás...', 'Autentificat, redirecționare...')}</p>
+                </div>`
               : ''
-          }
-          <label class="block bg-surface-container-low rounded-xl px-4 pt-2 pb-1.5 border border-transparent focus-within:border-secondary focus-within:bg-surface-container-lowest">
-            <span class="flex items-center gap-1 text-label-sm uppercase text-secondary">${icon(
-              'mail',
-              'text-[15px]'
-            )}${tr('E-mail cím', 'Adresă de e-mail')}</span>
-            <input id="email" name="email" type="email" required autocomplete="email" placeholder="${tr('eszter@vebeat.hu', 'elena@vebeat.ro')}" class="w-full bg-transparent py-1 text-body-md focus:outline-none">
-          </label>
-          <label class="block bg-surface-container-low rounded-xl px-4 pt-2 pb-1.5 border border-transparent focus-within:border-secondary focus-within:bg-surface-container-lowest">
-            <span class="flex items-center gap-1 text-label-sm uppercase text-secondary">${icon(
-              'lock',
-              'text-[15px]'
-            )}${tr('Jelszó', 'Parolă')}</span>
-            <input id="password" name="password" type="password" required minlength="8" autocomplete="${
-              reg ? 'new-password' : 'current-password'
-            }" placeholder="${tr('Legalább 8 karakter', 'Cel puțin 8 caractere')}" class="w-full bg-transparent py-1 text-body-md focus:outline-none">
-          </label>
-          <p id="autherr" role="alert" class="text-body-sm text-error min-h-[20px]"></p>
-          <button class="h-[52px] rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-md active:scale-[0.99]">${
-            reg ? tr('Fiók létrehozása & Folytatás', 'Creează cont & Continuă') : tr('Bejelentkezés a Recepttáramba', 'Autentificare în Colecție')
-          } ${icon('arrow_forward')}</button>
-        </form>
+            : `<form data-form="auth" data-reg="${reg}" data-return="${esc(
+                returnSlug
+              )}" novalidate class="bg-surface-container-lowest rounded-xl p-4 shadow-sm flex flex-col gap-3.5 border border-outline-variant/30">
+                <p class="text-[11px] text-on-surface-variant bg-surface-container-low rounded-lg px-3 py-2 border border-outline-variant/30">${tr(
+                  'Helyi fejlesztői belépési mód (amíg a Clerk éles kulcsok nincsenek beállítva).',
+                  'Mod local de dezvoltare (până la configurarea cheilor live Clerk).'
+                )}</p>
+                ${
+                  reg
+                    ? `<label class="block bg-surface-container-low rounded-xl px-4 pt-2 pb-1.5 border border-transparent focus-within:border-secondary focus-within:bg-surface-container-lowest">
+                  <span class="flex items-center gap-1 text-label-sm uppercase text-secondary">${icon(
+                    'person',
+                    'text-[15px]'
+                  )}${tr('Teljes név', 'Nume complet')}</span>
+                  <input id="name" name="name" type="text" required maxlength="60" autocomplete="name" placeholder="${tr('Kovács Eszter', 'Elena Popescu')}" class="w-full bg-transparent py-1 text-body-md focus:outline-none">
+                </label>`
+                    : ''
+                }
+                <label class="block bg-surface-container-low rounded-xl px-4 pt-2 pb-1.5 border border-transparent focus-within:border-secondary focus-within:bg-surface-container-lowest">
+                  <span class="flex items-center gap-1 text-label-sm uppercase text-secondary">${icon(
+                    'mail',
+                    'text-[15px]'
+                  )}${tr('E-mail cím', 'Adresă de e-mail')}</span>
+                  <input id="email" name="email" type="email" required autocomplete="email" placeholder="${tr('eszter@vebeat.hu', 'elena@vebeat.ro')}" class="w-full bg-transparent py-1 text-body-md focus:outline-none">
+                </label>
+                <label class="block bg-surface-container-low rounded-xl px-4 pt-2 pb-1.5 border border-transparent focus-within:border-secondary focus-within:bg-surface-container-lowest">
+                  <span class="flex items-center gap-1 text-label-sm uppercase text-secondary">${icon(
+                    'lock',
+                    'text-[15px]'
+                  )}${tr('Jelszó', 'Parolă')}</span>
+                  <input id="password" name="password" type="password" required minlength="8" autocomplete="${
+                    reg ? 'new-password' : 'current-password'
+                  }" placeholder="${tr('Legalább 8 karakter', 'Cel puțin 8 caractere')}" class="w-full bg-transparent py-1 text-body-md focus:outline-none">
+                </label>
+                <p id="autherr" role="alert" class="text-body-sm text-error min-h-[20px]"></p>
+                <button class="h-[52px] rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-md active:scale-[0.99]">${
+                  reg ? tr('Fiók létrehozása & Folytatás', 'Creează cont & Continuă') : tr('Bejelentkezés a Recepttáramba', 'Autentificare în Colecție')
+                } ${icon('arrow_forward')}</button>
+              </form>`
+        }
       </div>`;
     }
 
@@ -3777,6 +3804,17 @@ export function App() {
       if (!keepScroll) recordNav(location.hash || '#/');
 
       if (rt.q.get('checkout') === 'success') {
+        const checkoutSessionId = rt.q.get('session_id') || '';
+        Object.keys(recipeDetailsCache).forEach(k => delete recipeDetailsCache[k]);
+        if (checkoutSessionId) {
+          const cleanParams = new URLSearchParams(rt.q);
+          cleanParams.delete('session_id');
+          const cleanQs = cleanParams.toString();
+          history.replaceState(null, '', `#/${rt.p.join('/')}${cleanQs ? '?' + cleanQs : ''}`);
+          await syncMeAndRecipes(checkoutSessionId);
+        } else if (!hasSub()) {
+          await syncMeAndRecipes();
+        }
         toast(
           tr(
             '🎉 Sikeres előfizetés! Minden prémium recept feloldva.',
@@ -3855,7 +3893,17 @@ export function App() {
         html += cookieBannerHtml(S.lang);
       }
 
-      $app.classList.toggle('pb-28', S.langSelected);
+      const mountClerkAuth =
+        clerk.enabled && S.langSelected && page === 'belepes' && !clerk.isSignedIn;
+      const clerkReg = rt.q.get('m') === 'reg';
+      setClerkAuthView(prev =>
+        prev.open === mountClerkAuth && prev.reg === clerkReg
+          ? prev
+          : { open: mountClerkAuth, reg: clerkReg }
+      );
+
+      $app.classList.toggle('pb-28', S.langSelected && !mountClerkAuth);
+      $app.classList.toggle('pb-2', mountClerkAuth);
       $app.innerHTML = html;
       const tabLabels: Record<string, string> =
         S.lang === 'ro'
@@ -3916,12 +3964,30 @@ export function App() {
     // or load immediately in the chosen / URL-specified language.
     if (S.langSelected) {
       save();
-      syncMeAndRecipes().then(() => render());
+      const rtInit = route();
+      const initSessionId =
+        rtInit.q.get('checkout') === 'success' ? rtInit.q.get('session_id') || '' : '';
+      syncMeAndRecipes(initSessionId).then(() => {
+        const rtAfter = route();
+        if (clerk.enabled && clerk.isSignedIn && rtAfter.p[0] === 'belepes') {
+          const ret = rtAfter.q.get('return') || '';
+          goReplace(
+            ret === 'elofizetes'
+              ? '#/elofizetes'
+              : ret
+                ? `#/r/${encodeURIComponent(ret)}`
+                : '#/profil'
+          );
+        } else {
+          render();
+        }
+      });
     } else {
       render();
     }
 
     return () => {
+      setClerkAuthView({ open: false, reg: false });
       $app.removeEventListener('click', onClick);
       $app.removeEventListener('change', onChange);
       $app.removeEventListener('submit', onSubmit);
@@ -3939,6 +4005,21 @@ export function App() {
         </div>
       )}
       <main id="app" ref={appRef} className="pb-28"></main>
+      {clerk.enabled && clerkAuthView.open && (
+        <div className="px-margin-mobile pb-10">
+          {clerk.isLoaded ? (
+            clerkAuthView.reg ? (
+              clerk.renderSignUp()
+            ) : (
+              clerk.renderSignIn()
+            )
+          ) : (
+            <div className="bg-surface-container-lowest rounded-xl p-6 text-center text-body-sm text-on-surface-variant shadow-sm border border-outline-variant/30">
+              Clerk betöltése...
+            </div>
+          )}
+        </div>
+      )}
       <nav
         id="tabbar"
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_-4px_16px_rgba(44,62,45,0.04)]"

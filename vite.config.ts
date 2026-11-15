@@ -1,10 +1,20 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type { Plugin } from 'vite';
 
 // Local Vercel Serverless Function adapter for Vite dev/preview server
 function vercelApiPlugin(): Plugin {
-  const attachMiddleware = (server: any) => {
+  const attachMiddleware = (server: any, isDevServer = false) => {
+    const loadApi = async (relPath: string) => {
+      if (isDevServer && typeof server?.ssrLoadModule === 'function') {
+        return await server.ssrLoadModule(relPath);
+      }
+      const absUrl = pathToFileURL(path.resolve(process.cwd(), relPath.replace(/^\/+/, ''))).href;
+      return await import(absUrl);
+    };
+
     server.middlewares.use(async (req: any, res: any, next: any) => {
       const rawUrl = req.url || '';
       if (!rawUrl.startsWith('/api/')) return next();
@@ -47,28 +57,32 @@ function vercelApiPlugin(): Plugin {
 
       try {
         if (pathname === '/api/recipes') {
-          const mod = await import('./api/recipes/index.ts');
+          const mod = await loadApi('/api/recipes/index.ts');
           return await mod.default(req, res);
         }
         if (pathname.startsWith('/api/recipes/')) {
           req.query.slug = decodeURIComponent(pathname.slice('/api/recipes/'.length));
-          const mod = await import('./api/recipes/[slug].ts');
+          const mod = await loadApi('/api/recipes/[slug].ts');
           return await mod.default(req, res);
         }
         if (pathname === '/api/stripe/checkout') {
-          const mod = await import('./api/stripe/checkout.ts');
+          const mod = await loadApi('/api/stripe/checkout.ts');
           return await mod.default(req, res);
         }
         if (pathname === '/api/stripe/portal') {
-          const mod = await import('./api/stripe/portal.ts');
+          const mod = await loadApi('/api/stripe/portal.ts');
           return await mod.default(req, res);
         }
         if (pathname === '/api/stripe/webhook') {
-          const mod = await import('./api/stripe/webhook.ts');
+          const mod = await loadApi('/api/stripe/webhook.ts');
           return await mod.default(req, res);
         }
         if (pathname === '/api/me') {
-          const mod = await import('./api/me.ts');
+          const mod = await loadApi('/api/me.ts');
+          return await mod.default(req, res);
+        }
+        if (pathname === '/api/health') {
+          const mod = await loadApi('/api/health.ts');
           return await mod.default(req, res);
         }
         res.status(404).json({ error: 'API endpoint not found' });
@@ -82,18 +96,30 @@ function vercelApiPlugin(): Plugin {
   return {
     name: 'vercel-serverless-api-adapter',
     configureServer(server) {
-      attachMiddleware(server);
+      attachMiddleware(server, true);
     },
     configurePreviewServer(server) {
-      attachMiddleware(server);
+      attachMiddleware(server, false);
     },
   };
 }
 
-export default defineConfig({
-  plugins: [react(), vercelApiPlugin()],
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-  },
+export default defineConfig(({ mode }) => {
+  // Load .env / .env.local variables (including server-only POSTGRES_URL, CLERK_SECRET_KEY, STRIPE_*)
+  // so local Vite API middleware behaves identically to Vercel Serverless Functions.
+  const env = loadEnv(mode, process.cwd(), '');
+  for (const [k, v] of Object.entries(env)) {
+    if (process.env[k] === undefined && v !== '') {
+      process.env[k] = v;
+    }
+  }
+
+  return {
+    envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
+    plugins: [react(), vercelApiPlugin()],
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+    },
+  };
 });

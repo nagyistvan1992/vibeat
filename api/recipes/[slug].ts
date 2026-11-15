@@ -1,4 +1,4 @@
-import { getRecipeForUser, getUserById } from '../../src/db/index.js';
+import { getRecipeForUser, getUserById, upsertUserSubscription } from '../../src/db/index.js';
 import { verifyClerkRequest } from '../_lib/auth.js';
 
 export default async function handler(req: any, res: any) {
@@ -17,13 +17,20 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // 1. Verify Clerk session token on the server
+    // 1. Verify Clerk session token on the server and ensure user exists in Postgres
     const authUser = await verifyClerkRequest(req);
     let hasActiveSubscription = false;
     let userStatus: string = 'anonymous';
 
     if (authUser) {
-      const dbUser = await getUserById(authUser.userId);
+      let dbUser = await getUserById(authUser.userId);
+      if (!dbUser) {
+        dbUser = await upsertUserSubscription({
+          id: authUser.userId,
+          email: authUser.email,
+          subscription_status: 'free',
+        });
+      }
       userStatus = dbUser?.subscription_status || 'free';
       if (dbUser && dbUser.subscription_status === 'active') {
         hasActiveSubscription = true;

@@ -6,7 +6,61 @@ import * as schema from '../src/db/schema.js';
 // @ts-ignore
 import { SEED_RECIPES } from '../db/seed-data.mjs';
 
+function loadLocalEnvFiles() {
+  for (const fname of ['.env.local', '.env']) {
+    const fpath = path.resolve(process.cwd(), fname);
+    if (fs.existsSync(fpath)) {
+      try {
+        (process as any).loadEnvFile?.(fpath);
+      } catch {
+        // ignore if already loaded or unsupported
+      }
+    }
+  }
+}
+
+function splitSqlStatements(sqlText: string): string[] {
+  const out: string[] = [];
+  let cur = '';
+  let inSingle = false;
+  let inDollar = false;
+  for (let i = 0; i < sqlText.length; i++) {
+    const ch = sqlText[i];
+    const next2 = sqlText.slice(i, i + 2);
+    if (!inSingle && next2 === '$$') {
+      inDollar = !inDollar;
+      cur += '$$';
+      i++;
+      continue;
+    }
+    if (!inDollar && ch === "'") {
+      inSingle = !inSingle;
+      cur += ch;
+      continue;
+    }
+    if (!inDollar && !inSingle && ch === ';') {
+      const cleaned = cur
+        .split(/\r?\n/)
+        .filter(line => !line.trim().startsWith('--'))
+        .join('\n')
+        .trim();
+      if (cleaned) out.push(cleaned);
+      cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  const tail = cur
+    .split(/\r?\n/)
+    .filter(line => !line.trim().startsWith('--'))
+    .join('\n')
+    .trim();
+  if (tail) out.push(tail);
+  return out;
+}
+
 async function main() {
+  loadLocalEnvFiles();
   const connStr = process.env.POSTGRES_URL || process.env.DATABASE_URL;
   if (!connStr) {
     console.error(
@@ -23,10 +77,7 @@ async function main() {
     const migrationPath = path.resolve(process.cwd(), 'db', 'migrations', migFile);
     if (!fs.existsSync(migrationPath)) continue;
     const migrationSql = fs.readFileSync(migrationPath, 'utf8');
-    const statements = migrationSql
-      .split(/;\s*\r?\n/)
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+    const statements = splitSqlStatements(migrationSql);
     for (const stmt of statements) {
       await sql(`${stmt};`);
     }
@@ -77,6 +128,21 @@ async function main() {
           shortDescription: r.short_description,
           prepTime: r.prep_time,
           isFree: Boolean(r.is_free),
+          shortTitle: r.short,
+          subtitle: r.subtitle,
+          author: r.author,
+          rating: String(r.rating || 4.9),
+          reviews: Number(r.reviews || 80),
+          prepMinutes: Number(r.prep || 10),
+          cookMinutes: Number(r.cook || 0),
+          kcal: Number(r.kcal || 0),
+          difficulty: r.difficulty || 'Könnyű',
+          servings: Number(r.servings || 2),
+          featured: Boolean(r.featured),
+          tags: r.tags || [],
+          nutrition: r.nutrition || [],
+          wine: r.wine || null,
+          comments: r.comments || [],
           ingredients: r.ingredients || [],
           instructions: r.instructions || '',
           stepsJson: r.steps || [],

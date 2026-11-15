@@ -47,12 +47,12 @@ function ClerkConnectedApp() {
     },
     renderSignIn: () => (
       <div className="flex justify-center py-2">
-        <SignIn appearance={clerkAppearance} routing="hash" />
+        <SignIn appearance={clerkAppearance} routing="virtual" />
       </div>
     ),
     renderSignUp: () => (
       <div className="flex justify-center py-2">
-        <SignUp appearance={clerkAppearance} routing="hash" />
+        <SignUp appearance={clerkAppearance} routing="virtual" />
       </div>
     ),
     renderUserButton: () => <UserButton appearance={clerkAppearance} />,
