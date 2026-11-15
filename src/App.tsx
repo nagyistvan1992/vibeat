@@ -858,6 +858,9 @@ export function App() {
 
     const langName = (l: 'hu' | 'ro') => (l === 'ro' ? 'Română' : 'Magyar');
 
+    const PAGE_X = 'w-full max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8';
+    const NARROW_X = 'w-full max-w-3xl mx-auto px-3.5 sm:px-6 lg:px-8';
+
     const langBtn = () => {
       const currentName = langName(S.lang);
       return `<div class="relative">
@@ -867,15 +870,15 @@ export function App() {
         )}" title="${tr(
           `Kiválasztott nyelv: ${currentName}`,
           `Limbă selectată: ${currentName}`
-        )}" class="px-2 py-1 rounded-full bg-surface-container-lowest border border-primary/25 text-primary text-label-sm flex items-center gap-1 shadow-sm hover:bg-surface-container-high active:scale-95 transition">
-          ${icon('language', 'text-[15px] text-secondary')}
+        )}" class="px-2 sm:px-2.5 py-1.5 rounded-full bg-surface-container-lowest border border-primary/25 text-primary text-[11px] sm:text-label-sm flex items-center gap-1 shadow-sm hover:bg-surface-container-high active:scale-95 transition whitespace-nowrap">
+          ${icon('language', 'text-[14px] sm:text-[15px] text-secondary shrink-0')}
           <span class="font-bold">${currentName}</span>
-          ${icon(langMenuOpen ? 'expand_less' : 'expand_more', 'text-[14px] text-on-surface-variant')}
+          ${icon(langMenuOpen ? 'expand_less' : 'expand_more', 'text-[14px] text-on-surface-variant shrink-0')}
         </button>
         ${
           langMenuOpen
             ? `<div data-act="closeLangMenu" class="fixed inset-0 z-40" aria-hidden="true"></div>
-               <div id="lang-menu" role="menu" aria-label="${tr('Nyelvválasztó', 'Selector limbă')}" class="absolute right-0 top-10 z-50 w-64 rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-xl p-2 flex flex-col gap-1">
+               <div id="lang-menu" role="menu" aria-label="${tr('Nyelvválasztó', 'Selector limbă')}" class="absolute right-0 top-11 z-50 w-64 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-xl p-2 flex flex-col gap-1">
                  <div class="px-2.5 py-1.5 border-b border-outline-variant/25 text-label-sm text-on-surface-variant flex items-center justify-between">
                    <span>${tr('Kiválasztott nyelv', 'Limbă selectată')}:</span>
                    <strong class="text-primary">${currentName} (${S.lang.toUpperCase()})</strong>
@@ -916,8 +919,8 @@ export function App() {
 
     function viewLanguageGate() {
       const busy = Boolean(langLoading);
-      return `<section id="lang-gate" aria-label="Válassz nyelvet / Alege limba" class="min-h-screen px-margin-mobile py-10 flex flex-col items-center justify-center gap-6 bg-surface">
-        <div class="w-full max-w-[400px] bg-surface-container-lowest rounded-[28px] p-6 shadow-xl border border-outline-variant/30 flex flex-col gap-6">
+      return `<section id="lang-gate" aria-label="Válassz nyelvet / Alege limba" class="min-h-[100dvh] px-4 py-10 flex flex-col items-center justify-center gap-6 bg-surface">
+        <div class="w-full max-w-md bg-surface-container-lowest rounded-[28px] p-5 sm:p-6 shadow-xl border border-outline-variant/30 flex flex-col gap-6">
           <div class="flex flex-col items-center text-center gap-2.5">
             <span class="w-14 h-14 rounded-2xl bg-secondary-fixed/70 flex items-center justify-center text-secondary shadow-sm">${icon('local_dining', 'text-[30px]')}</span>
             <div class="flex flex-col items-center">
@@ -966,20 +969,20 @@ export function App() {
       const rt = route();
       const curSlug = rt.p[0] === 'r' && rt.p[1] ? rt.p[1] : '';
       const subHref = curSlug ? `#/elofizetes?return=${encodeURIComponent(curSlug)}` : '#/elofizetes';
-      return `<div class="flex items-center gap-1">
+      return `<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
         ${langBtn()}
         ${
           hasSub()
-            ? `<a href="#/profil" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-label-sm shadow-sm">${icon(
+            ? `<a href="#/profil" aria-label="${tr('Prémium', 'Premium')}" class="inline-flex items-center justify-center gap-1 w-8 h-8 min-[430px]:w-auto min-[430px]:h-auto min-[430px]:px-2.5 min-[430px]:py-1.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-[11px] sm:text-label-sm shadow-sm whitespace-nowrap shrink-0">${icon(
                 'workspace_premium',
-                'fill text-[13px]'
-              )}${tr('Prémium', 'Premium')}</a>`
-            : `<a href="${subHref}" class="px-2 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-label-sm flex items-center gap-1 shadow-sm hover:opacity-90">${icon(
+                'fill text-[15px] min-[430px]:text-[13px]'
+              )}<span class="hidden min-[430px]:inline">${tr('Prémium', 'Premium')}</span></a>`
+            : `<a href="${subHref}" aria-label="${tr('Prémium', 'Premium')}" class="inline-flex items-center justify-center gap-1 w-8 h-8 min-[430px]:w-auto min-[430px]:h-auto min-[430px]:px-2.5 min-[430px]:py-1.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[11px] sm:text-label-sm shadow-sm hover:opacity-90 whitespace-nowrap shrink-0">${icon(
                 'workspace_premium',
-                'fill text-[13px] text-secondary'
-              )}${tr('Prémium', 'Premium')}</a>`
+                'fill text-[15px] min-[430px]:text-[13px] text-secondary'
+              )}<span class="hidden min-[430px]:inline">${tr('Prémium', 'Premium')}</span></a>`
         }
-        <a href="#/profil" aria-label="${tr('Profil', 'Profil')}" class="w-8 h-8 flex items-center justify-center"><span class="w-8 h-8 rounded-full ${
+        <a href="#/profil" aria-label="${tr('Profil', 'Profil')}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center shrink-0"><span class="w-8 h-8 sm:w-9 sm:h-9 rounded-full ${
           hasSub() ? 'bg-secondary text-on-secondary ring-2 ring-tertiary-fixed' : 'bg-primary text-on-primary'
         } flex items-center justify-center text-label-md">${
           uName ? esc(uName[0].toUpperCase()) : icon('person', 'text-[18px]')
@@ -988,13 +991,13 @@ export function App() {
     };
 
     function brandHeader() {
-      return `<header class="sticky top-0 z-30 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)] no-print">
-        <div class="h-16 px-4 flex items-center justify-between gap-2">
-          <a href="#/" class="flex items-center gap-1.5 shrink-0">${icon('local_dining', 'text-secondary text-[22px] shrink-0')}
-            <span class="flex flex-col"><span class="font-serif text-headline-sm text-primary tracking-tight leading-none">Vebeat</span>
-            <span class="text-[10px] font-semibold tracking-normal text-on-surface-variant leading-tight mt-0.5 whitespace-nowrap">Fuel your daily vibe.</span></span></a>
-          <div class="flex items-center gap-1 shrink-0">
-            <a href="#/kereses" aria-label="${tr('Keresés', 'Căutare')}" class="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">${icon('search', 'text-[19px]')}</a>
+      return `<header class="sticky top-0 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.03)] no-print">
+        <div class="max-w-6xl mx-auto h-16 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
+          <a href="#/" class="flex items-center gap-1.5 min-w-0">${icon('local_dining', 'text-secondary text-[20px] sm:text-[24px] shrink-0')}
+            <span class="flex flex-col min-w-0"><span class="font-serif text-[19px] sm:text-headline-sm text-primary tracking-tight leading-none">Vebeat</span>
+            <span class="text-[9.5px] sm:text-[11px] font-semibold tracking-normal text-on-surface-variant leading-tight mt-0.5 whitespace-nowrap">Fuel your daily vibe.</span></span></a>
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <a href="#/kereses" aria-label="${tr('Keresés', 'Căutare')}" class="hidden sm:flex w-9 h-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">${icon('search', 'text-[20px]')}</a>
             ${avatarPill()}
           </div>
         </div></header>`;
@@ -1002,13 +1005,13 @@ export function App() {
 
     function titleHeader(
       title: string,
-      right = `<div class="flex items-center gap-0.5"><a href="#/kereses" aria-label="${tr('Keresés', 'Căutare')}" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">${icon('search', 'text-[20px]')}</a>${avatarPill()}</div>`
+      right = `<div class="flex items-center gap-1 sm:gap-1.5 shrink-0"><a href="#/kereses" aria-label="${tr('Keresés', 'Căutare')}" class="hidden sm:flex w-9 h-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">${icon('search', 'text-[20px]')}</a>${avatarPill()}</div>`
     ) {
-      return `<header class="sticky top-0 z-30 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)] no-print">
-        <div class="h-16 px-margin-mobile flex items-center justify-between gap-2">
+      return `<header class="sticky top-0 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.03)] no-print">
+        <div class="max-w-6xl mx-auto h-16 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
           <div class="flex items-center gap-1 min-w-0">
-            <button data-act="back" aria-label="${tr('Vissza', 'Înapoi')}" class="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-surface-container">${icon('arrow_back')}</button>
-            <h1 class="font-serif text-title-lg text-primary truncate">${esc(title)}</h1>
+            <button type="button" data-act="back" aria-label="${tr('Vissza', 'Înapoi')}" class="w-9 h-9 sm:w-10 sm:h-10 -ml-1.5 flex items-center justify-center rounded-full hover:bg-surface-container shrink-0">${icon('arrow_back')}</button>
+            <h1 class="font-serif text-[18px] sm:text-title-lg text-primary truncate">${esc(title)}</h1>
           </div>${right}</div></header>`;
     }
 
@@ -1031,37 +1034,37 @@ export function App() {
 
     function recipeCard(r: any) {
       const free = Boolean(r.is_free || r.mine);
-      return `<article class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col group border border-outline-variant/30">
-        <div class="relative w-full h-32 overflow-hidden">
+      return `<article class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col group border border-outline-variant/30 hover:shadow-md transition-shadow">
+        <div class="relative w-full aspect-[4/3] overflow-hidden bg-surface-container-low">
           <a href="#/r/${encodeURIComponent(r.id)}" tabindex="-1"><img loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${img(
             r.image
           )}" alt="${esc(r.title)}"></a>
-          <div class="absolute top-2 left-2 flex items-center gap-1">${accessBadge(free, hasSub(), S.lang)}</div>
-          <div class="absolute top-2 right-2">${favBtn(r.id, 'w-7 h-7')}</div>
+          <div class="absolute top-2 left-2 right-11 flex items-center gap-1 flex-wrap pointer-events-none">${accessBadge(free, hasSub(), S.lang)}</div>
+          <div class="absolute top-2 right-2">${favBtn(r.id, 'w-8 h-8')}</div>
           ${
             r.tags?.[0]
-              ? `<div class="absolute bottom-2 left-2">${tagPill(r.tags[0], S.lang)}</div>`
+              ? `<div class="absolute bottom-2 left-2 right-2 flex pointer-events-none"><span class="max-w-full truncate">${tagPill(r.tags[0], S.lang)}</span></div>`
               : ''
           }
         </div>
-        <div class="p-2.5 flex flex-col justify-between flex-grow gap-2">
-          <a href="#/r/${encodeURIComponent(r.id)}" class="font-serif text-[16px] text-on-surface line-clamp-2 leading-snug tracking-tight hover:text-primary">${esc(
+        <div class="p-3 flex flex-col justify-between flex-grow gap-2">
+          <a href="#/r/${encodeURIComponent(r.id)}" class="font-serif text-[15px] sm:text-[17px] text-on-surface line-clamp-2 leading-snug tracking-tight hover:text-primary min-h-[2.6em]">${esc(
             r.title
           )}</a>
-          <div class="flex flex-col gap-1.5 pt-1 border-t border-outline-variant/30">
-            <div class="flex items-center justify-between text-on-surface-variant text-[12px]">
-              <span class="flex items-center gap-1">${icon(
+          <div class="flex flex-col gap-1.5 pt-1.5 border-t border-outline-variant/30">
+            <div class="flex items-center justify-between gap-1 text-on-surface-variant text-[11px] sm:text-[12px]">
+              <span class="flex items-center gap-1 whitespace-nowrap">${icon(
                 'schedule',
                 'text-secondary text-[14px]'
               )} ${r.prep + r.cook} ${minLabel()}</span>
-              <span class="flex items-center gap-1">${icon(
+              <span class="flex items-center gap-1 whitespace-nowrap">${icon(
                 'local_fire_department',
                 'text-primary-container text-[14px]'
               )} ${r.kcal || '–'} kcal</span>
             </div>
-            <div class="flex items-center justify-between text-label-sm">
-              <span class="text-secondary uppercase tracking-wider">${esc(r.difficulty)}</span>
-              <span class="text-[11px] text-on-surface-variant/80 font-normal">${r.servings} ${srvWord()}</span>
+            <div class="flex items-center justify-between gap-1 text-label-sm">
+              <span class="text-secondary uppercase tracking-wider truncate">${esc(r.difficulty)}</span>
+              <span class="text-[11px] text-on-surface-variant/80 font-normal whitespace-nowrap">${r.servings} ${srvWord()}</span>
             </div>
           </div>
         </div></article>`;
@@ -1069,7 +1072,7 @@ export function App() {
 
     const grid = (list: any[]) =>
       list.length
-        ? `<div class="grid grid-cols-2 gap-3">${list.map(recipeCard).join('')}</div>`
+        ? `<div class="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">${list.map(recipeCard).join('')}</div>`
         : `<div class="text-center py-12 px-6 bg-surface-container-low rounded-xl text-on-surface-variant">${icon(
             'search_off',
             'text-[36px] text-outline'
@@ -1141,8 +1144,8 @@ export function App() {
       const tenMinCount = list.filter(FILTERS['10 perces']).length;
       const freeCount = list.filter(FILTERS['Ingyenes']).length;
       return `<section class="flex flex-col gap-space-sm" aria-label="${tr('Receptkategóriák', 'Categorii de rețete')}">
-        <div class="flex items-center justify-between">
-          <div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="min-w-0">
             <h3 class="font-serif text-headline-sm text-primary flex items-center gap-1.5">${icon(
               'category',
               'text-secondary text-[19px]'
@@ -1153,19 +1156,19 @@ export function App() {
           </div>
           <a href="#/kereses?f=${encodeURIComponent(
             '10 perces'
-          )}" class="px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-label-sm flex items-center gap-1 shadow-sm hover:opacity-90">${icon(
+          )}" class="px-3 py-1.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-label-sm flex items-center gap-1 shadow-sm hover:opacity-90 shrink-0">${icon(
         'bolt',
         'text-[14px]'
       )}${tr(`10 percesek (${tenMinCount})`, `În 10 min (${tenMinCount})`)}</a>
         </div>
-        <div class="grid grid-cols-2 gap-2.5">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
           ${CATEGORIES.map(c => {
             const cnt = list.filter(FILTERS[c.name]).length;
             const on = activeCat === c.name;
             const target = on ? '#/kereses' : `#/kereses?f=${encodeURIComponent(c.name)}`;
             const catTitle = trTag(c.name, S.lang);
             const catSub = S.lang === 'ro' ? CAT_SUB_RO[c.name] || c.sub : c.sub;
-            return `<a href="${target}" class="relative h-20 rounded-xl overflow-hidden shadow-sm flex items-end p-2.5 group border ${
+            return `<a href="${target}" class="relative h-20 sm:h-24 rounded-xl overflow-hidden shadow-sm flex items-end p-2.5 sm:p-3 group border ${
               on ? 'border-secondary ring-2 ring-secondary/40' : 'border-outline-variant/30'
             }">
               <img loading="lazy" src="${img(c.img)}" alt="${esc(
@@ -1174,10 +1177,10 @@ export function App() {
               <div class="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/65 to-black/25"></div>
               <div class="relative z-10 flex items-center justify-between w-full gap-1.5 text-on-primary">
                 <div class="min-w-0">
-                  <span class="flex items-center gap-1 font-serif text-[15px] leading-tight truncate">${icon(
+                  <span class="flex items-center gap-1 font-serif text-[14px] sm:text-[16px] leading-tight truncate">${icon(
                     c.icon,
-                    'text-secondary-fixed text-[15px]'
-                  )}${esc(catTitle)}</span>
+                    'text-secondary-fixed text-[15px] shrink-0'
+                  )}<span class="truncate">${esc(catTitle)}</span></span>
                   <span class="block text-[11px] text-surface-variant truncate">${esc(catSub)}</span>
                 </div>
                 <span class="shrink-0 px-2 py-0.5 rounded-full bg-surface-container-lowest/90 text-primary text-label-sm">${cnt}</span>
@@ -1193,7 +1196,7 @@ export function App() {
       if (!list.length) {
         return (
           brandHeader() +
-          `<div class="px-margin-mobile py-20 text-center text-on-surface-variant">${tr('Receptek betöltése a szerverről...', 'Se încarcă rețetele de pe server...')}</div>`
+          `<div class="${PAGE_X} py-20 text-center text-on-surface-variant">${tr('Receptek betöltése a szerverről...', 'Se încarcă rețetele de pe server...')}</div>`
         );
       }
       const premiumCount = list.filter(r => !r.is_free && !r.mine).length;
@@ -1202,12 +1205,12 @@ export function App() {
       const popular = (others.length ? others : list)
         .slice()
         .sort((a, b) => (b.mine ? 9 : b.rating || 0) - (a.mine ? 9 : a.rating || 0))
-        .slice(0, 6);
+        .slice(0, 8);
 
       return (
         brandHeader() +
-        `<div class="px-margin-mobile pt-4 flex flex-col gap-space-lg">
-        <section class="flex flex-col gap-space-sm">
+        `<div class="${PAGE_X} pt-4 sm:pt-6 flex flex-col gap-6 sm:gap-8">
+        <section class="flex flex-col gap-3">
           <form data-form="search" role="search" class="relative">
             <span class="absolute inset-y-0 left-3.5 flex items-center text-outline pointer-events-none">${icon(
               'search',
@@ -1217,13 +1220,13 @@ export function App() {
             <input id="hq" name="q" type="search" placeholder="${tr(
               `Keresés ${list.length} recept vagy alapanyag között...`,
               `Caută printre ${list.length} rețete sau ingrediente...`
-            )}" class="w-full h-12 pl-11 pr-11 bg-surface-container-lowest placeholder:text-outline rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
-            <a href="#/kereses" aria-label="${tr('Részletes szűrő', 'Filtre detaliate')}" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-on-surface-variant hover:text-primary"><span class="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center">${icon(
+            )}" class="w-full h-12 pl-11 pr-12 bg-surface-container-lowest placeholder:text-outline rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+            <a href="#/kereses" aria-label="${tr('Részletes szűrő', 'Filtre detaliate')}" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-on-surface-variant hover:text-primary"><span class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">${icon(
               'tune',
               'text-[18px]'
             )}</span></a>
           </form>
-          <div class="flex items-center gap-2 overflow-x-auto pb-1 -mx-margin-mobile px-margin-mobile no-scrollbar">
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
             ${chip(tr('Összes recept', 'Toate rețetele'), true, '#/kereses')}${chip(
               tr('Ingyenes', 'Gratuit'),
               false,
@@ -1247,31 +1250,31 @@ export function App() {
 
         ${activeCookBanner()}
 
-        <section class="flex flex-col gap-2">
-          <div class="flex items-center justify-between">
+        <section class="flex flex-col gap-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="flex items-center gap-1.5 text-label-sm uppercase tracking-wider text-secondary">${icon(
               'workspace_premium',
               'text-[18px]'
             )}${tr('A hét választása', 'Alegerea săptămânii')}</span>
             <span class="text-label-md text-on-surface-variant">${tr('Séf ajánlata', 'Recomandarea chef-ului')}</span>
           </div>
-          <article class="relative bg-surface-container-lowest rounded-xl overflow-hidden shadow-md flex flex-col group">
-            <div class="relative w-full h-56 overflow-hidden">
+          <article class="relative bg-surface-container-lowest rounded-2xl overflow-hidden shadow-md flex flex-col md:grid md:grid-cols-12 group border border-outline-variant/25">
+            <div class="relative w-full h-56 sm:h-72 md:h-full md:min-h-[310px] md:col-span-7 overflow-hidden">
               <a href="#/r/${encodeURIComponent(f.id)}" tabindex="-1"><img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${img(
                 f.image
               )}" alt="${esc(f.title)}"></a>
               <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent pointer-events-none"></div>
-              <div class="absolute top-3 left-3 flex items-center gap-1.5">${accessBadge(
+              <div class="absolute top-3 left-3 right-14 flex flex-wrap items-center gap-1.5">${accessBadge(
                 Boolean(f.is_free),
                 hasSub(),
                 S.lang
               )}${ratingPill(f)}</div>
               <div class="absolute top-3 right-3">${favBtn(f.id)}</div>
-              <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+              <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
                 <span class="px-2.5 py-0.5 rounded-full bg-secondary text-on-secondary text-label-sm">${tr('Kiemelt recept', 'Rețetă recomandată')}</span>
                 ${
                   f.author
-                    ? `<span class="text-label-md text-surface-variant flex items-center gap-1">${icon(
+                    ? `<span class="text-label-md text-surface-variant flex items-center gap-1 truncate max-w-full">${icon(
                         'person',
                         'text-[16px]'
                       )} ${esc(f.author)}</span>`
@@ -1279,11 +1282,14 @@ export function App() {
                 }
               </div>
             </div>
-            <div class="p-4 flex flex-col gap-3">
-              <a href="#/r/${encodeURIComponent(f.id)}" class="font-serif text-headline-sm text-primary leading-tight hover:underline">${esc(
-                f.title
-              )}</a>
-              <div class="grid grid-cols-3 gap-2 py-2.5 px-3 bg-surface-container-low rounded-lg text-center">
+            <div class="p-4 sm:p-6 md:col-span-5 flex flex-col justify-between gap-4">
+              <div class="flex flex-col gap-2">
+                <a href="#/r/${encodeURIComponent(f.id)}" class="font-serif text-headline-sm sm:text-headline-md text-primary leading-tight hover:underline">${esc(
+                  f.title
+                )}</a>
+                ${f.subtitle ? `<p class="text-body-sm text-secondary italic">${esc(f.subtitle)}</p>` : ''}
+              </div>
+              <div class="grid grid-cols-3 gap-2 py-2.5 px-2 sm:px-3 bg-surface-container-low rounded-xl text-center">
                 ${[
                   ['schedule', 'text-secondary', `${f.prep + f.cook} ${minsWord()}`, tr('Időigény', 'Timp total')],
                   ['local_fire_department', 'text-primary-container', `${f.kcal || '–'} kcal`, tr('Energia', 'Energie')],
@@ -1291,16 +1297,16 @@ export function App() {
                 ]
                   .map(
                     ([i, c, v, l]) =>
-                      `<div class="flex flex-col items-center">${icon(
+                      `<div class="flex flex-col items-center min-w-0 px-0.5">${icon(
                         i,
                         c + ' text-[18px]'
-                      )}<span class="text-title-md mt-0.5">${esc(
+                      )}<span class="text-[14px] sm:text-title-md font-semibold mt-0.5 truncate max-w-full">${esc(
                         v
-                      )}</span><span class="text-label-sm text-on-surface-variant">${l}</span></div>`
+                      )}</span><span class="text-[10px] sm:text-label-sm text-on-surface-variant truncate max-w-full">${l}</span></div>`
                   )
                   .join('')}
               </div>
-              <a href="#/r/${encodeURIComponent(f.id)}" class="w-full h-11 rounded-lg bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 hover:bg-secondary/95 shadow-sm active:scale-[0.99] transition">${tr('Recept megtekintése', 'Vezi rețeta')} ${icon(
+              <a href="#/r/${encodeURIComponent(f.id)}" class="w-full min-h-[46px] px-4 rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 hover:bg-secondary/95 shadow-sm active:scale-[0.99] transition">${tr('Recept megtekintése', 'Vezi rețeta')} ${icon(
                 'arrow_forward',
                 'text-[20px]'
               )}</a>
@@ -1311,9 +1317,9 @@ export function App() {
         ${categoriesSection(list)}
 
         <section class="flex flex-col gap-space-sm">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <div><h3 class="font-serif text-headline-sm text-primary">${tr('Népszerű a héten', 'Populare săptămâna aceasta')}</h3><p class="text-body-sm text-on-surface-variant">${tr('A gasztroközösség kedvencei', 'Preferatele comunității culinare')}</p></div>
-            <a href="#/kereses" class="text-label-md text-secondary hover:underline flex items-center">${tr('Összes', 'Toate')} (${
+            <a href="#/kereses" class="text-label-md text-secondary hover:underline flex items-center shrink-0">${tr('Összes', 'Toate')} (${
               list.length
             }) ${icon('chevron_right', 'text-[16px]')}</a>
           </div>
@@ -1322,38 +1328,40 @@ export function App() {
 
         ${seasonalRow()}
 
-        <section class="relative bg-primary text-on-primary rounded-xl p-4 overflow-hidden shadow-md">
-          <div class="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-primary-container/40 pointer-events-none"></div>
-          <div class="relative flex flex-col gap-2.5">
-            <div class="flex items-center gap-2"><span class="px-2 py-0.5 rounded-full bg-secondary text-label-sm uppercase tracking-wider">${tr('Vebeat Prémium', 'Vebeat Premium')}</span><span class="text-label-md text-on-primary-container">${
-              hasSub() ? tr('Aktív tagság', 'Abonament activ') : tr('Teljes hozzáférés', 'Acces complet')
-            }</span></div>
-            <h4 class="font-serif text-headline-sm leading-tight">${
-              hasSub()
-                ? tr('Köszönjük, hogy a Vebeat Prémium tagja vagy!', 'Îți mulțumim că ești membru Vebeat Premium!')
-                : tr(
-                    `Nyisd fel mind a ${list.length} séf-receptet és az interaktív Főzési Módot!`,
-                    `Deblochează toate cele ${list.length} rețete de chef și Modul Interactiv de Gătit!`
-                  )
-            }</h4>
-            <p class="text-body-sm text-surface-variant">${
-              hasSub()
-                ? tr(
-                    'Minden prémium recept, pontos grammos hozzávaló, időzítő és Google Keep export korlátlanul elérhető számodra.',
-                    'Ai acces nelimitat la toate rețetele premium, ingredientele exacte la gram, cronometre și exportul în Google Keep.'
-                  )
-                : tr(
-                    `Oldd fel a ${premiumCount} prémium nemzetközi, tradicionális, böjti és 10 perces receptet, a grammra pontos hozzávalókat és a séf-időzítőket.`,
-                    `Deblochează cele ${premiumCount} rețete premium internaționale, tradiționale, de post și gata în 10 minute, cu cantități exacte și cronometre integrate.`
-                  )
-            }</p>
+        <section class="relative bg-primary text-on-primary rounded-2xl p-5 sm:p-6 overflow-hidden shadow-md">
+          <div class="absolute -right-8 -bottom-8 w-36 h-36 rounded-full bg-primary-container/40 pointer-events-none"></div>
+          <div class="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex flex-col gap-2 max-w-2xl">
+              <div class="flex flex-wrap items-center gap-2"><span class="px-2.5 py-0.5 rounded-full bg-secondary text-label-sm uppercase tracking-wider">${tr('Vebeat Prémium', 'Vebeat Premium')}</span><span class="text-label-md text-on-primary-container">${
+                hasSub() ? tr('Aktív tagság', 'Abonament activ') : tr('Teljes hozzáférés', 'Acces complet')
+              }</span></div>
+              <h4 class="font-serif text-headline-sm sm:text-headline-md leading-tight">${
+                hasSub()
+                  ? tr('Köszönjük, hogy a Vebeat Prémium tagja vagy!', 'Îți mulțumim că ești membru Vebeat Premium!')
+                  : tr(
+                      `Nyisd fel mind a ${list.length} séf-receptet és az interaktív Főzési Módot!`,
+                      `Deblochează toate cele ${list.length} rețete de chef și Modul Interactiv de Gătit!`
+                    )
+              }</h4>
+              <p class="text-body-sm text-surface-variant">${
+                hasSub()
+                  ? tr(
+                      'Minden prémium recept, pontos grammos hozzávaló, időzítő és Google Keep export korlátlanul elérhető számodra.',
+                      'Ai acces nelimitat la toate rețetele premium, ingredientele exacte la gram, cronometre și exportul în Google Keep.'
+                    )
+                  : tr(
+                      `Oldd fel a ${premiumCount} prémium nemzetközi, tradicionális, böjti és 10 perces receptet, a grammra pontos hozzávalókat és a séf-időzítőket.`,
+                      `Deblochează cele ${premiumCount} rețete premium internaționale, tradiționale, de post și gata în 10 minute, cu cantități exacte și cronometre integrate.`
+                    )
+              }</p>
+            </div>
             ${
               hasSub()
-                ? `<button type="button" data-act="portal" class="self-start h-10 px-4 rounded-lg bg-surface-container-lowest text-primary text-title-md flex items-center gap-1.5 shadow-sm active:scale-95 transition">${icon(
+                ? `<button type="button" data-act="portal" class="self-start md:self-center min-h-[44px] px-5 rounded-xl bg-surface-container-lowest text-primary text-title-md flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0">${icon(
                     'credit_card',
                     'text-[18px]'
                   )}${tr('Előfizetés kezelése', 'Gestionează abonamentul')}</button>`
-                : `<a href="#/elofizetes" class="self-start h-10 px-4 rounded-lg bg-secondary text-on-secondary text-title-md flex items-center gap-1.5 shadow-sm active:scale-95 transition">${icon(
+                : `<a href="#/elofizetes" class="self-start md:self-center min-h-[44px] px-5 rounded-xl bg-secondary text-on-secondary text-title-md flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0">${icon(
                     'workspace_premium',
                     'fill text-[18px]'
                   )}${tr(
@@ -1373,14 +1381,14 @@ export function App() {
         .toLocaleDateString(S.lang === 'ro' ? 'ro-RO' : 'hu-HU', { month: 'long' })
         .replace(/^./, c => c.toUpperCase());
       return `<section class="flex flex-col gap-space-sm">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div><h3 class="font-serif text-headline-sm text-primary flex items-center gap-1.5">${icon(
             'calendar_month',
             'text-[18px]'
           )}${tr('Szezonális Ízek', 'Arome de Sezon')}</h3><p class="text-body-sm text-on-surface-variant">${tr('Frissesség a helyi termelőktől', 'Prospețime de la producători locali')}</p></div>
-          <span class="text-label-md px-2.5 py-1 rounded-full bg-surface-container-high">${month}</span>
+          <span class="text-label-md px-2.5 py-1 rounded-full bg-surface-container-high shrink-0">${month}</span>
         </div>
-        <div class="flex gap-3 overflow-x-auto pb-2 -mx-margin-mobile px-margin-mobile no-scrollbar">
+        <div class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar">
           ${seasonalItems
             .map(
               (s: any) => {
@@ -1388,15 +1396,15 @@ export function App() {
                 const target = on
                   ? '#/kereses?szezonalis=1'
                   : `#/kereses?szezonalis=1&q=${encodeURIComponent(s.q)}`;
-                return `<a href="${target}" class="min-w-[140px] max-w-[140px] bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col flex-shrink-0 group border ${
-                  on ? 'border-secondary ring-2 ring-secondary/40' : 'border-transparent'
+                return `<a href="${target}" class="snap-start min-w-[144px] w-[144px] sm:min-w-[168px] sm:w-[168px] bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col flex-shrink-0 group border ${
+                  on ? 'border-secondary ring-2 ring-secondary/40' : 'border-outline-variant/25'
                 }">
-            <div class="w-full h-24 overflow-hidden"><img loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${img(
+            <div class="w-full h-24 sm:h-28 overflow-hidden"><img loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${img(
               s.image
             )}" alt="${esc(s.name)}"></div>
             <div class="p-2.5 flex flex-col gap-0.5"><span class="text-title-md truncate">${esc(
               s.name
-            )}</span><span class="text-label-sm text-secondary">${esc(s.note)}</span>
+            )}</span><span class="text-label-sm text-secondary truncate">${esc(s.note)}</span>
             <span class="text-body-sm text-on-surface-variant">${
               all().filter(r => match(r, s.q)).length
             } ${tr('recept', 'rețete')}</span></div></a>`;
@@ -1442,7 +1450,7 @@ export function App() {
               ? `${tr('Kategória', 'Categorie')}: ${trTag(f, S.lang)}`
               : tr('Kategóriák & keresés', 'Categorii & Căutare')
         ) +
-        `<div class="px-margin-mobile pt-4 flex flex-col gap-space-md">
+        `<div class="${PAGE_X} pt-4 flex flex-col gap-space-md">
         ${sez ? seasonalRow(query) : ''}
         <form data-form="search" role="search" class="relative">
           <span class="absolute inset-y-0 left-3.5 flex items-center text-outline pointer-events-none">${icon(
@@ -1456,14 +1464,14 @@ export function App() {
             sez ? '1' : ''
           }" placeholder="${tr('Receptnév, alapanyag, kategória...', 'Nume rețetă, ingredient, categorie...')}" class="w-full h-12 pl-11 pr-4 bg-surface-container-lowest placeholder:text-outline rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
         </form>
-        <div id="filterchips" class="flex items-center gap-2 overflow-x-auto pb-1 -mx-margin-mobile px-margin-mobile no-scrollbar">
+        <div id="filterchips" class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           ${chip(tr('Összes', 'Toate'), !f, href(''))}${Object.keys(FILTERS)
             .map(k => chip(trTag(k, S.lang), f === k, href(f === k ? '' : k)))
             .join('')}
         </div>
         ${
           !sez && !query
-            ? `<details class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/30"${
+            ? `<details class="bg-surface-container-low rounded-xl p-3 sm:p-4 border border-outline-variant/30"${
                 !f ? ' open' : ''
               }>
           <summary class="cursor-pointer font-serif text-title-md text-primary flex items-center justify-between list-none">
@@ -1530,12 +1538,12 @@ export function App() {
       return `<section id="paywall-section" class="relative rounded-2xl overflow-hidden border border-secondary/30 shadow-lg bg-surface-container-lowest">
         <!-- Teaser & Blurred Preview Background -->
         <div class="p-4 pb-2 flex flex-col gap-3">
-          <div class="flex items-center justify-between">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-label-sm uppercase tracking-wider">${icon(
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-label-sm uppercase tracking-wider whitespace-nowrap">${icon(
               'lock',
               'fill text-[14px] text-secondary'
             )}${tr('Prémium Recept Előnézet', 'Previzualizare Rețetă Premium')}</span>
-            <span class="text-label-sm text-on-surface-variant">${ingCount} ${tr('hozzávaló', 'ingrediente')} • ${stepCount} ${tr('lépés', 'pași')}</span>
+            <span class="text-label-sm text-on-surface-variant whitespace-nowrap">${ingCount} ${tr('hozzávaló', 'ingrediente')} • ${stepCount} ${tr('lépés', 'pași')}</span>
           </div>
           <div class="bg-surface-container-low rounded-xl p-3.5 border-l-4 border-secondary">
             <p class="text-label-sm uppercase tracking-wider text-secondary mb-1">${tr('Ízelítő az 1. lépésből', 'Avanpremieră din Pasul 1')}</p>
@@ -1664,7 +1672,7 @@ export function App() {
 
       return (
         titleHeader(tr('Vebeat Prémium Előfizetés', 'Abonament Vebeat Premium')) +
-        `<div class="px-margin-mobile pt-4 flex flex-col gap-5">
+        `<div class="${NARROW_X} pt-4 pb-6 flex flex-col gap-5">
           <section class="rounded-2xl bg-primary text-on-primary p-5 shadow-lg flex flex-col gap-3">
             <div class="flex items-center justify-between gap-2">
               <span class="px-2.5 py-0.5 rounded-full bg-secondary text-on-secondary text-label-sm uppercase tracking-wider">${tr('Teljes hozzáférés', 'Acces complet')}</span>
@@ -1773,147 +1781,161 @@ export function App() {
         hasProg = !isLocked && prog >= 1 && prog <= totalSteps,
         startStep = hasProg ? prog : 1;
 
-      const right = `<div class="flex items-center gap-0.5">
-        ${
-          r.mine
-            ? `<a href="#/szerk/${encodeURIComponent(
-                r.id
-              )}" aria-label="${tr('Szerkesztés', 'Editare')}" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-container">${icon(
-                'edit',
-                'text-[20px]'
-              )}</a>
-        <button data-act="del" data-id="${esc(
-          r.id
-        )}" aria-label="${tr('Törlés', 'Șterge')}" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-error-container text-error">${icon(
-                'delete',
-                'text-[20px]'
-              )}</button>`
-            : ''
-        }
-        <a href="#/kereses" aria-label="${tr('Keresés', 'Căutare')}" class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">${icon(
-          'search',
-          'text-[20px]'
-        )}</a>
-        ${avatarPill()}</div>`;
-
       return (
-        titleHeader(tr('Recept Részletek', 'Detalii Rețetă'), right) +
-        `<div class="px-margin-mobile pt-3 flex flex-col gap-space-lg">
-        <div class="relative rounded-xl overflow-hidden shadow-md bg-surface-container-low aspect-[4/3]">
-          <img class="w-full h-full object-cover" src="${img(r.image)}" alt="${esc(r.title)}">
-          <div class="absolute inset-x-0 top-0 bg-gradient-to-b from-black/25 to-transparent flex items-start justify-between gap-2 p-4">
-            <div class="flex flex-wrap gap-1.5 items-center">${accessBadge(
-              Boolean(r.is_free || r.mine),
-              hasSub(),
-              S.lang
-            )}${(r.tags || []).map((tg: string) => tagLinkPill(tg, S.lang)).join('')}</div>
-            ${favBtn(r.id, 'w-11 h-11 shrink-0')}
-          </div>
-        </div>
-
-        <section class="flex flex-col gap-2">
-          ${
-            r.rating
-              ? `<div class="flex items-center gap-1.5"><span class="flex text-secondary">${icon(
-                  'star',
-                  'fill text-[16px]'
-                ).repeat(
-                  5
-                )}</span><span class="text-label-md text-on-surface-variant font-medium">${
-                  r.rating
-                } (${r.reviews} ${tr('értékelés', 'evaluări')})</span></div>`
-              : ''
-          }
-          <h2 class="font-serif text-headline-md text-primary leading-tight">${esc(
-            r.title
-          )}</h2>
-          ${
-            r.subtitle
-              ? `<p class="font-serif italic text-title-lg font-normal text-secondary">${esc(
-                  r.subtitle
-                )}</p>`
-              : ''
-          }
-          ${
-            r.description || r.short_description
-              ? `<p class="text-body-md text-on-surface-variant leading-relaxed">${esc(
-                  r.description || r.short_description
-                )}</p>`
-              : ''
-          }
-        </section>
-
-        <section class="flex items-center justify-between p-3.5 bg-surface-container-low rounded-xl shadow-sm">
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center font-serif shrink-0">${esc(
-              (r.author || 'V')[0]
-            )}</span>
-            <div class="min-w-0">
-              <p class="text-title-md flex items-center gap-1 truncate">${esc(
-                r.author || 'Vebeat'
-              )}${icon('verified', 'fill text-primary text-[16px]')}</p>
-              <p class="text-body-sm text-on-surface-variant">${
-                r.mine
-                  ? tr('Saját recept', 'Rețetă proprie')
-                  : tr('Kreatív séf • Vebeat', 'Chef creativ • Vebeat')
-              }</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-1.5 no-print">
-            <button data-act="share" aria-label="${tr('Recept megosztása', 'Distribuie rețeta')}" class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center hover:text-primary active:scale-90 transition">${icon(
+        brandHeader() +
+        `<div class="${PAGE_X} pt-3.5 pb-6 flex flex-col gap-5 sm:gap-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-outline-variant/25 no-print">
+          <button type="button" data-act="back" class="inline-flex items-center gap-1.5 min-h-[40px] px-3.5 py-1.5 rounded-full bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 text-primary text-label-md font-semibold shadow-sm active:scale-95 transition">
+            ${icon('arrow_back', 'text-[18px]')}
+            <span>${tr('Vissza', 'Înapoi')}</span>
+          </button>
+          <div class="flex items-center gap-1.5">
+            ${
+              r.mine
+                ? `<a href="#/szerk/${encodeURIComponent(
+                    r.id
+                  )}" aria-label="${tr('Szerkesztés', 'Editare')}" class="w-9 h-9 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-primary">${icon(
+                    'edit',
+                    'text-[18px]'
+                  )}</a>
+            <button type="button" data-act="del" data-id="${esc(
+              r.id
+            )}" aria-label="${tr('Törlés', 'Șterge')}" class="w-9 h-9 rounded-full bg-surface-container-low hover:bg-error-container flex items-center justify-center text-error">${icon(
+                    'delete',
+                    'text-[18px]'
+                  )}</button>`
+                : ''
+            }
+            <button type="button" data-act="share" aria-label="${tr('Recept megosztása', 'Distribuie rețeta')}" class="w-9 h-9 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-primary active:scale-90 transition">${icon(
               'share',
-              'text-[20px]'
+              'text-[18px]'
             )}</button>
-            <button data-act="print" aria-label="${tr('Recept nyomtatása', 'Printează rețeta')}" class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center hover:text-primary active:scale-90 transition">${icon(
+            <button type="button" data-act="print" aria-label="${tr('Recept nyomtatása', 'Printează rețeta')}" class="w-9 h-9 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-primary active:scale-90 transition">${icon(
               'print',
-              'text-[20px]'
+              'text-[18px]'
             )}</button>
           </div>
-        </section>
-
-        <div class="grid grid-cols-4 gap-2 text-center">
-          ${[
-            ['nest_clock_farsight_analog', 'text-primary', tr('ELŐKÉSZ.', 'PREGĂTIRE'), `${r.prep} ${minLabel()}`],
-            ['skillet', 'text-secondary', tr('FŐZÉS', 'GĂTIRE'), `${r.cook} ${minLabel()}`],
-            ['timer', 'text-primary', tr('ÖSSZES', 'TOTAL'), `${r.prep + r.cook} ${minLabel()}`],
-            ['local_fire_department', 'text-secondary-container', tr('ENERGIA', 'ENERGIE'), `${r.kcal || '–'} kcal`],
-          ]
-            .map(
-              ([ic, c, l, v]) =>
-                `<div class="p-3 rounded-xl bg-surface-container-low shadow-sm flex flex-col items-center">${icon(
-                  ic,
-                  c + ' text-[20px] mb-1'
-                )}<span class="text-label-sm text-on-surface-variant">${l}</span><span class="text-title-md mt-0.5">${v}</span></div>`
-            )
-            .join('')}
         </div>
 
-        ${
-          r.nutrition?.length
-            ? `<section class="bg-surface-container-low rounded-xl p-4 shadow-sm flex flex-col gap-3">
-          <div class="flex items-center justify-between"><h3 class="text-title-md text-primary flex items-center gap-2">${icon(
-            'nutrition',
-            'text-primary text-[20px]'
-          )}${tr('Tápérték adagonként', 'Valori nutriționale / porție')}</h3><span class="text-label-md px-2.5 py-1 rounded-full bg-surface-container-highest text-primary">${
-                r.kcal
-              } ${tr('kcal / adag', 'kcal / porție')}</span></div>
-          ${r.nutrition
-            .map(([k, v]: [string, string], idx: number) => {
-              const pct =
-                parseInt((v.match(/\((\d+)%\)/) || [])[1], 10) || [45, 55, 35][idx % 3];
-              const bar = ['bg-primary-container', 'bg-tertiary', 'bg-secondary-container'][
-                idx % 3
-              ];
-              return `<div><div class="flex justify-between text-body-sm mb-1"><span class="font-medium">${esc(
-                k
-              )}</span><span class="text-primary font-bold">${esc(
-                v
-              )}</span></div><div class="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden"><div class="h-full ${bar} rounded-full" style="width:${pct}%"></div></div></div>`;
-            })
-            .join('')}
-        </section>`
-            : ''
-        }
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 lg:items-start">
+          <div class="lg:col-span-5 flex flex-col gap-4 lg:sticky lg:top-20">
+            <div class="relative rounded-2xl overflow-hidden shadow-md bg-surface-container-low aspect-[4/3]">
+              <img class="w-full h-full object-cover" src="${img(r.image)}" alt="${esc(r.title)}">
+              <div class="absolute inset-x-0 top-0 bg-gradient-to-b from-black/25 to-transparent flex items-start justify-between gap-2 p-3 sm:p-4">
+                <div class="flex flex-wrap gap-1.5 items-center">${accessBadge(
+                  Boolean(r.is_free || r.mine),
+                  hasSub(),
+                  S.lang
+                )}</div>
+                ${favBtn(r.id, 'w-10 h-10 shrink-0')}
+              </div>
+            </div>
+
+            <section class="flex items-center justify-between gap-3 p-3.5 bg-surface-container-low rounded-xl shadow-sm">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center font-serif shrink-0">${esc(
+                  (r.author || 'V')[0]
+                )}</span>
+                <div class="min-w-0">
+                  <p class="text-title-md flex items-center gap-1 truncate">${esc(
+                    r.author || 'Vebeat'
+                  )}${icon('verified', 'fill text-primary text-[16px] shrink-0')}</p>
+                  <p class="text-body-sm text-on-surface-variant truncate">${
+                    r.mine
+                      ? tr('Saját recept', 'Rețetă proprie')
+                      : tr('Kreatív séf • Vebeat', 'Chef creativ • Vebeat')
+                  }</p>
+                </div>
+              </div>
+              <span class="text-label-sm px-2.5 py-1 rounded-full bg-surface-container-highest text-primary shrink-0">${esc(
+                r.difficulty || tr('Könnyű', 'Ușor')
+              )}</span>
+            </section>
+
+            ${
+              r.nutrition?.length
+                ? `<section class="bg-surface-container-low rounded-xl p-4 shadow-sm flex flex-col gap-3">
+              <div class="flex flex-wrap items-center justify-between gap-2"><h3 class="text-title-md text-primary flex items-center gap-2">${icon(
+                'nutrition',
+                'text-primary text-[20px]'
+              )}${tr('Tápérték adagonként', 'Valori nutriționale / porție')}</h3><span class="text-label-md px-2.5 py-1 rounded-full bg-surface-container-highest text-primary">${
+                    r.kcal
+                  } ${tr('kcal / adag', 'kcal / porție')}</span></div>
+              ${r.nutrition
+                .map(([k, v]: [string, string], idx: number) => {
+                  const pct =
+                    parseInt((v.match(/\((\d+)%\)/) || [])[1], 10) || [45, 55, 35][idx % 3];
+                  const bar = ['bg-primary-container', 'bg-tertiary', 'bg-secondary-container'][
+                    idx % 3
+                  ];
+                  return `<div><div class="flex justify-between gap-2 text-body-sm mb-1"><span class="font-medium">${esc(
+                    k
+                  )}</span><span class="text-primary font-bold">${esc(
+                    v
+                  )}</span></div><div class="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden"><div class="h-full ${bar} rounded-full" style="width:${pct}%"></div></div></div>`;
+                })
+                .join('')}
+            </section>`
+                : ''
+            }
+          </div>
+
+          <div class="lg:col-span-7 flex flex-col gap-5 sm:gap-6">
+            <section class="flex flex-col gap-2.5">
+              ${
+                r.rating
+                  ? `<div class="flex items-center gap-1.5"><span class="flex text-secondary">${icon(
+                      'star',
+                      'fill text-[16px]'
+                    ).repeat(
+                      5
+                    )}</span><span class="text-label-md text-on-surface-variant font-medium">${
+                      r.rating
+                    } (${r.reviews} ${tr('értékelés', 'evaluări')})</span></div>`
+                  : ''
+              }
+              <h1 class="font-serif text-headline-md sm:text-display-hero-mobile text-primary leading-tight">${esc(
+                r.title
+              )}</h1>
+              ${
+                r.subtitle
+                  ? `<p class="font-serif italic text-title-md sm:text-title-lg font-normal text-secondary">${esc(
+                      r.subtitle
+                    )}</p>`
+                  : ''
+              }
+              ${
+                r.description || r.short_description
+                  ? `<p class="text-body-md text-on-surface-variant leading-relaxed">${esc(
+                      r.description || r.short_description
+                    )}</p>`
+                  : ''
+              }
+              ${
+                r.tags?.length
+                  ? `<div class="flex flex-wrap gap-1.5 pt-1">${(r.tags || [])
+                      .map((tg: string) => tagLinkPill(tg, S.lang))
+                      .join('')}</div>`
+                  : ''
+              }
+            </section>
+
+            <div class="grid grid-cols-2 min-[400px]:grid-cols-4 gap-2.5 text-center">
+              ${[
+                ['nest_clock_farsight_analog', 'text-primary', tr('ELŐKÉSZ.', 'PREGĂTIRE'), `${r.prep} ${minLabel()}`],
+                ['skillet', 'text-secondary', tr('FŐZÉS', 'GĂTIRE'), `${r.cook} ${minLabel()}`],
+                ['timer', 'text-primary', tr('ÖSSZES', 'TOTAL'), `${r.prep + r.cook} ${minLabel()}`],
+                ['local_fire_department', 'text-secondary-container', tr('ENERGIA', 'ENERGIE'), `${r.kcal || '–'} kcal`],
+              ]
+                .map(
+                  ([ic, c, l, v]) =>
+                    `<div class="p-3 rounded-xl bg-surface-container-low shadow-sm flex flex-col items-center min-w-0">${icon(
+                      ic,
+                      c + ' text-[20px] mb-1'
+                    )}<span class="text-[10px] sm:text-label-sm text-on-surface-variant truncate max-w-full">${l}</span><span class="text-title-md mt-0.5 truncate max-w-full">${v}</span></div>`
+                )
+                .join('')}
+            </div>
 
         ${
           isLocked
@@ -1922,7 +1944,7 @@ export function App() {
           ${
             hasProg
               ? `<section class="bg-primary text-on-primary rounded-xl p-3.5 flex flex-col gap-2 shadow-md no-print">
-            <div class="flex items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="flex items-center gap-1.5 text-label-sm uppercase tracking-wider text-secondary-fixed">${icon(
                 'bookmark_added',
                 'text-[18px]'
@@ -1938,23 +1960,23 @@ export function App() {
               : ''
           }
 
-          <div class="grid grid-cols-2 gap-3 no-print">
+          <div class="grid grid-cols-1 min-[380px]:grid-cols-2 gap-2.5 no-print">
             <a href="#/fozes/${encodeURIComponent(
               r.id
-            )}/${startStep}" data-replace class="h-12 rounded-lg bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-md active:scale-[0.99]">${icon(
+            )}/${startStep}" data-replace class="min-h-[48px] px-4 rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-md active:scale-[0.99]">${icon(
                 'play_circle',
                 'fill text-[20px]'
               )}${hasProg ? `${tr('Folytatás', 'Continuă')} (${prog}/${r.steps.length})` : tr('Főzés indítása', 'Începe gătitul')}</a>
-            <a href="#ing" data-act="scroll" data-target="ing" class="h-12 rounded-lg bg-surface-container-highest text-primary text-title-md flex items-center justify-center gap-2 shadow-sm">${icon(
+            <a href="#ing" data-act="scroll" data-target="ing" class="min-h-[48px] px-4 rounded-xl bg-surface-container-highest text-primary text-title-md flex items-center justify-center gap-2 shadow-sm">${icon(
               'format_list_bulleted',
               'text-[20px]'
             )}${tr('Hozzávalók', 'Ingrediente')}</a>
           </div>
 
-          <section id="ing" class="bg-surface-container-lowest rounded-xl shadow-sm p-4 flex flex-col gap-3 scroll-mt-20">
-            <div class="flex items-center justify-between gap-2">
+          <section id="ing" class="bg-surface-container-lowest rounded-xl shadow-sm p-4 sm:p-5 flex flex-col gap-3 scroll-mt-20">
+            <div class="flex flex-wrap items-center justify-between gap-2.5">
               <div><h3 class="font-serif text-headline-sm text-primary">${tr('Hozzávalók', 'Ingrediente')}</h3><p class="text-body-sm text-on-surface-variant">${tr('Érintsd meg a hozzávalót a pipáláshoz', 'Atinge un ingredient pentru a-l bifa')}</p></div>
-              <div class="flex items-center gap-1.5 bg-surface-container-high px-2 py-1.5 rounded-full" role="group" aria-label="${tr('Adagok száma', 'Număr de porții')}">
+              <div class="flex items-center gap-1.5 bg-surface-container-high px-2 py-1.5 rounded-full shrink-0" role="group" aria-label="${tr('Adagok száma', 'Număr de porții')}">
                 <button data-act="srv" data-d="-1" aria-label="${tr('Adag csökkentése', 'Scade porțiile')}" class="w-9 h-9 rounded-full bg-surface flex items-center justify-center text-primary shadow-sm active:scale-90 disabled:opacity-40" ${
                   n <= 1 ? 'disabled' : ''
                 }>${icon('remove', 'text-[18px]')}</button>
@@ -1985,7 +2007,7 @@ export function App() {
                 })
                 .join('')}
             </ul>
-            <button data-act="shop" class="h-12 mt-1 rounded-xl bg-primary text-on-primary text-title-md flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] no-print">${icon(
+            <button data-act="shop" class="min-h-[48px] mt-1 px-4 rounded-xl bg-primary text-on-primary text-title-md flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] no-print">${icon(
               'add_shopping_cart',
               'text-[20px]'
             )}${
@@ -2001,29 +2023,29 @@ export function App() {
             </div>
 
             <div class="pt-3 border-t border-outline-variant/30 flex flex-col gap-2 no-print">
-              <div class="flex items-center justify-between">
+              <div class="flex flex-wrap items-center justify-between gap-1">
                 <span class="text-label-md text-primary flex items-center gap-1.5">${icon(
                   'checklist_rtl',
                   'text-secondary text-[18px]'
                 )}${tr('Exportálás pipálható jegyzetként', 'Exportă ca listă cu bife')}</span>
                 <span class="text-label-sm text-on-surface-variant">${tr('Recept pontos nevével', 'Cu numele exact al rețetei')}</span>
               </div>
-              <div class="grid grid-cols-3 gap-2">
-                <button type="button" data-act="keep" class="h-10 px-2 rounded-lg bg-secondary-fixed text-on-secondary-fixed text-label-md flex items-center justify-center gap-1 shadow-sm hover:opacity-90 active:scale-95 transition">${icon(
+              <div class="grid grid-cols-1 min-[420px]:grid-cols-3 gap-2">
+                <button type="button" data-act="keep" class="min-h-[42px] px-3 rounded-lg bg-secondary-fixed text-on-secondary-fixed text-label-md flex items-center justify-center gap-1.5 shadow-sm hover:opacity-90 active:scale-95 transition">${icon(
                   'keep',
                   'text-[16px]'
                 )}Google Keep</button>
-                <button type="button" data-act="notes-share" class="h-10 px-2 rounded-lg bg-surface-container-high text-primary text-label-md flex items-center justify-center gap-1 shadow-sm hover:bg-surface-container-highest active:scale-95 transition">${icon(
+                <button type="button" data-act="notes-share" class="min-h-[42px] px-3 rounded-lg bg-surface-container-high text-primary text-label-md flex items-center justify-center gap-1.5 shadow-sm hover:bg-surface-container-highest active:scale-95 transition">${icon(
                   'ios_share',
                   'text-[16px]'
                 )}${tr('Más Notes app', 'Altă aplicație')}</button>
-                <button type="button" data-act="notes-dl" class="h-10 px-2 rounded-lg bg-surface-container-high text-primary text-label-md flex items-center justify-center gap-1 shadow-sm hover:bg-surface-container-highest active:scale-95 transition">${icon(
+                <button type="button" data-act="notes-dl" class="min-h-[42px] px-3 rounded-lg bg-surface-container-high text-primary text-label-md flex items-center justify-center gap-1.5 shadow-sm hover:bg-surface-container-highest active:scale-95 transition">${icon(
                   'download',
                   'text-[16px]'
                 )}${tr('Mentés (.txt)', 'Salvează (.txt)')}</button>
               </div>
               <div id="keepbox" class="hidden bg-surface-container-low rounded-lg p-3 border border-outline-variant/40 flex-col gap-2">
-                <div class="flex items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
                   <span class="text-label-sm uppercase tracking-wider text-secondary" id="keepstatus">${tr('Vágólapra másolva – készen áll a beillesztésre', 'Copiat în clipboard – gata de lipit')}</span>
                   <a href="https://keep.google.com/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-md bg-secondary text-on-secondary text-label-sm flex items-center gap-1 shadow-sm">${tr('Google Keep megnyitása', 'Deschide Google Keep')} ${icon(
                     'open_in_new',
@@ -2036,7 +2058,7 @@ export function App() {
           </section>
 
           <section id="prep-steps" class="flex flex-col gap-3 scroll-mt-20">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-2">
               <div><h3 class="font-serif text-headline-sm text-primary">${tr('Elkészítés lépésről lépésre', 'Mod de preparare pas cu pas')}</h3><p class="text-body-sm text-on-surface-variant">${tr('Kövesd a séf bevált módszerét a tökéletes végeredményért', 'Urmează metoda verificată a chef-ului pentru un rezultat perfect')}</p></div>
               <span class="px-3 py-1 rounded-full bg-primary-fixed text-primary text-label-sm whitespace-nowrap">${
                 (r.steps || []).length
@@ -2049,51 +2071,55 @@ export function App() {
         `
         }
 
-        <section class="bg-surface-container-lowest rounded-xl p-4 shadow-sm flex flex-col gap-2 no-print">
-          <label for="rnote" class="font-serif text-headline-sm text-primary flex items-center gap-2">${icon(
-            'edit_note',
-            'text-secondary text-[22px]'
-          )}${tr('Saját konyhai jegyzet', 'Notițele mele de bucătărie')}</label>
-          <textarea id="rnote" rows="2" maxlength="500" placeholder="${tr('Mit változtattál? Hány perc lett a saját sütődben?', 'Ce ai modificat? Câte minute a durat în cuptorul tău?')}" class="w-full bg-surface-container-low rounded-lg p-3 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20">${esc(
-            note
-          )}</textarea>
-          <div class="flex items-center justify-between">
-            <a href="#/profil?t=jegyzetek" class="text-label-sm text-secondary hover:underline">${tr('Megjelenik a Profil → Jegyzetek fülön', 'Apare în Profil → Notițe')}</a>
-            <button data-act="savenote" data-id="${esc(
-              r.id
-            )}" class="h-9 px-3.5 rounded-lg bg-primary text-on-primary text-label-md flex items-center gap-1">${icon(
-          'check',
-          'text-[16px]'
-        )}${tr('Jegyzet mentése', 'Salvează notița')}</button>
+            <section class="bg-surface-container-lowest rounded-xl p-4 shadow-sm flex flex-col gap-2 no-print">
+              <label for="rnote" class="font-serif text-headline-sm text-primary flex items-center gap-2">${icon(
+                'edit_note',
+                'text-secondary text-[22px]'
+              )}${tr('Saját konyhai jegyzet', 'Notițele mele de bucătărie')}</label>
+              <textarea id="rnote" rows="2" maxlength="500" placeholder="${tr('Mit változtattál? Hány perc lett a saját sütődben?', 'Ce ai modificat? Câte minute a durat în cuptorul tău?')}" class="w-full bg-surface-container-low rounded-lg p-3 text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20">${esc(
+                note
+              )}</textarea>
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <a href="#/profil?t=jegyzetek" class="text-label-sm text-secondary hover:underline">${tr('Megjelenik a Profil → Jegyzetek fülön', 'Apare în Profil → Notițe')}</a>
+                <button data-act="savenote" data-id="${esc(
+                  r.id
+                )}" class="min-h-[38px] px-3.5 rounded-lg bg-primary text-on-primary text-label-md flex items-center gap-1">${icon(
+              'check',
+              'text-[16px]'
+            )}${tr('Jegyzet mentése', 'Salvează notița')}</button>
+              </div>
+            </section>
           </div>
-        </section>
+        </div>
       </div>
 
-      <div class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-2.5rem)] max-w-[440px] z-40 bg-surface-container-lowest/95 backdrop-blur-xl p-2 rounded-full shadow-xl flex items-center justify-between border border-surface-container no-print">
-        <div class="flex items-center gap-2.5 pl-2 min-w-0">
-          <span class="w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">${icon(
-            isLocked ? 'lock' : 'restaurant',
-            'text-[20px]'
-          )}</span>
-          <div class="min-w-0"><p class="text-title-md text-primary truncate leading-tight">${esc(
-            r.short || r.title
-          )}</p><p class="text-body-sm text-on-surface-variant leading-tight">${n} ${srvWord()} • ${totalSteps} ${tr('lépés', 'pași')} • ${
-            r.prep + r.cook
-          } ${minsWord()}</p></div>
+      <div class="fixed-bottom-bar z-40 pb-safe bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant/40 shadow-[0_-4px_20px_rgba(23,40,25,0.08)] no-print">
+        <div class="max-w-5xl mx-auto px-3.5 sm:px-6 h-[72px] flex items-center justify-between gap-2.5">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <span class="w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">${icon(
+              isLocked ? 'lock' : 'restaurant',
+              'text-[20px]'
+            )}</span>
+            <div class="min-w-0"><p class="text-[14px] sm:text-title-md font-semibold text-primary truncate leading-tight">${esc(
+              r.short || r.title
+            )}</p><p class="text-[12px] sm:text-body-sm text-on-surface-variant truncate leading-tight">${n} ${srvWord()} • ${totalSteps} ${tr('lépés', 'pași')} • ${
+              r.prep + r.cook
+            } ${minsWord()}</p></div>
+          </div>
+          ${
+            isLocked
+              ? `<button type="button" data-act="scroll" data-target="paywall-section" class="min-h-[44px] px-3.5 sm:px-5 rounded-full bg-secondary text-on-secondary text-label-md sm:text-title-md flex items-center gap-1.5 shadow-md whitespace-nowrap shrink-0 active:scale-95 transition">${icon(
+                  'workspace_premium',
+                  'fill text-[18px]'
+                )}${tr('Prémium feloldása', 'Deblochează')}</button>`
+              : `<a href="#/fozes/${encodeURIComponent(
+                  r.id
+                )}/${startStep}" data-replace class="min-h-[44px] px-3.5 sm:px-5 rounded-full bg-secondary text-on-secondary text-label-md sm:text-title-md flex items-center gap-1.5 shadow-md whitespace-nowrap shrink-0 active:scale-95 transition">${icon(
+                  'play_arrow',
+                  'fill text-[20px]'
+                )}${hasProg ? `${tr('Folytatás', 'Continuă')} (${prog}/${r.steps.length})` : tr('Főzés indítása', 'Începe gătitul')}</a>`
+          }
         </div>
-        ${
-          isLocked
-            ? `<button type="button" data-act="scroll" data-target="paywall-section" class="h-11 px-5 rounded-full bg-secondary text-on-secondary text-title-md flex items-center gap-1.5 shadow-md whitespace-nowrap active:scale-95 transition">${icon(
-                'workspace_premium',
-                'fill text-[18px]'
-              )}${tr('Prémium feloldása', 'Deblochează Premium')}</button>`
-            : `<a href="#/fozes/${encodeURIComponent(
-                r.id
-              )}/${startStep}" data-replace class="h-11 px-5 rounded-full bg-secondary text-on-secondary text-title-md flex items-center gap-1.5 shadow-md whitespace-nowrap active:scale-95 transition">${icon(
-                'play_arrow',
-                'fill text-[20px]'
-              )}${hasProg ? `${tr('Folytatás', 'Continuă')} (${prog}/${r.steps.length})` : tr('Főzés indítása', 'Începe gătitul')}</a>`
-        }
       </div>`
       );
     }
@@ -2196,32 +2222,34 @@ export function App() {
         checked = S.checked[r.id] || [];
       const stepTip = s.tip ? { lead: '', bold: '', rest: s.tip } : last ? r.tip : null;
       const stepImg = s.image || (last ? r.image : '');
-      return `<header class="sticky top-0 z-30 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] px-margin-mobile pt-3 pb-3">
-          <div class="flex items-center justify-between gap-2">
-            <a href="#/r/${encodeURIComponent(
-              r.id
-            )}" data-replace class="h-10 px-2 -ml-2 rounded-lg flex items-center gap-1 text-on-surface-variant hover:text-on-surface">${icon(
-        'close',
-        'text-[20px]'
-      )}<span class="text-label-md">${tr('Kilépés', 'Ieșire')}</span></a>
-            <div class="flex items-center gap-2">
-              <button type="button" id="wake" data-act="wake" class="px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/30 text-label-sm flex items-center gap-1.5 shadow-sm"></button>
-              <span class="w-8 h-8 rounded-full bg-primary text-on-primary text-label-sm flex items-center justify-center">${
-                i + 1
-              }/${total}</span>
+      return `<header class="sticky top-0 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-3 pb-3">
+          <div class="max-w-4xl mx-auto px-3.5 sm:px-6">
+            <div class="flex items-center justify-between gap-2">
+              <a href="#/r/${encodeURIComponent(
+                r.id
+              )}" data-replace class="h-10 px-2 -ml-2 rounded-lg flex items-center gap-1 text-on-surface-variant hover:text-on-surface">${icon(
+          'close',
+          'text-[20px]'
+        )}<span class="text-label-md">${tr('Kilépés', 'Ieșire')}</span></a>
+              <div class="flex items-center gap-2">
+                <button type="button" id="wake" data-act="wake" class="px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/30 text-label-sm flex items-center gap-1.5 shadow-sm"></button>
+                <span class="w-8 h-8 rounded-full bg-primary text-on-primary text-label-sm flex items-center justify-center">${
+                  i + 1
+                }/${total}</span>
+              </div>
             </div>
+            <div class="flex items-baseline justify-between gap-2 mt-2">
+              <h1 class="font-serif text-headline-sm text-primary truncate">${esc(
+                r.short || r.title
+              )}</h1>
+              <span class="text-label-sm uppercase tracking-wider text-secondary shrink-0">${pct}% ${tr('kész', 'gata')} • ${
+                i + 1
+              } / ${total}</span>
+            </div>
+            <div class="h-1.5 rounded-full bg-surface-container-high mt-1.5 overflow-hidden" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="h-full bg-secondary rounded-full transition-all duration-300" style="width:${pct}%"></div></div>
           </div>
-          <div class="flex items-baseline justify-between gap-2 mt-2">
-            <h1 class="font-serif text-headline-sm text-primary truncate">${esc(
-              r.short || r.title
-            )}</h1>
-            <span class="text-label-sm uppercase tracking-wider text-secondary shrink-0">${pct}% ${tr('kész', 'gata')} • ${
-              i + 1
-            } / ${total}</span>
-          </div>
-          <div class="h-1.5 rounded-full bg-surface-container-high mt-1.5 overflow-hidden" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="h-full bg-secondary rounded-full transition-all duration-300" style="width:${pct}%"></div></div>
         </header>
-        <div class="px-margin-mobile pt-4 pb-28 flex flex-col gap-space-md">
+        <div class="${NARROW_X} pt-4 pb-28 flex flex-col gap-space-md">
           <div class="flex items-center gap-2 flex-wrap">
             ${
               s.timer
@@ -2379,13 +2407,13 @@ export function App() {
               : ''
           }
         </div>
-        <aside class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_20px_rgba(44,62,45,0.08)]">
-          <div class="h-20 px-margin-mobile flex items-center gap-2.5">
+        <aside class="fixed-bottom-bar z-40 pb-safe bg-surface/95 backdrop-blur-md border-t border-outline-variant/40 shadow-[0_-4px_20px_rgba(44,62,45,0.08)]">
+          <div class="max-w-4xl mx-auto h-[72px] px-3.5 sm:px-6 flex items-center gap-2.5">
             ${
               i > 0
                 ? `<a href="#/fozes/${encodeURIComponent(
                     r.id
-                  )}/${i}" data-replace class="h-13 min-h-[52px] px-4 rounded-xl bg-surface-container-high text-primary text-title-md flex items-center gap-1.5">${icon(
+                  )}/${i}" data-replace class="min-h-[48px] px-3.5 sm:px-4 rounded-xl bg-surface-container-high text-primary text-label-md sm:text-title-md flex items-center gap-1.5 shrink-0">${icon(
                     'arrow_back',
                     'text-[20px]'
                   )}${tr('Előző', 'Înapoi')}</a>`
@@ -2395,13 +2423,13 @@ export function App() {
               last
                 ? `<button data-act="cookdone" data-id="${esc(
                     r.id
-                  )}" class="flex-1 h-13 min-h-[52px] rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-md">${icon(
+                  )}" class="flex-1 min-h-[48px] px-4 rounded-xl bg-secondary text-on-secondary text-label-md sm:text-title-md flex items-center justify-center gap-2 shadow-md">${icon(
                     'celebration',
                     'text-[22px]'
                   )}${tr('Főzés befejezése & mentés', 'Finalizează & salvează')}</button>`
                 : `<a href="#/fozes/${encodeURIComponent(r.id)}/${
                     i + 2
-                  }" data-replace class="flex-1 h-13 min-h-[52px] rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-md">${tr('Következő lépés', 'Pasul următor')} (${
+                  }" data-replace class="flex-1 min-h-[48px] px-4 rounded-xl bg-secondary text-on-secondary text-label-md sm:text-title-md flex items-center justify-center gap-2 shadow-md">${tr('Következő lépés', 'Pasul următor')} (${
                     i + 2
                   }/${total}) ${icon('arrow_forward', 'text-[22px]')}</a>`
             }
@@ -2410,7 +2438,7 @@ export function App() {
     }
 
     function viewCookDone(r: any) {
-      return `<div class="min-h-screen px-margin-mobile py-10 flex flex-col items-center text-center gap-5">
+      return `<div class="${NARROW_X} min-h-[100dvh] py-10 flex flex-col items-center justify-center text-center gap-5">
         <span class="w-16 h-16 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center">${icon(
           'celebration',
           'text-[32px]'
@@ -2604,66 +2632,88 @@ export function App() {
       };
 
       const signedIn = isUserSignedIn();
-      const uName = activeUserName() || tr('Kovács Eszter (Vendég)', 'Oaspete Vebeat');
+      const uName = activeUserName() || '';
       const uEmail = clerk.enabled
         ? clerk.isSignedIn
-          ? clerk.email || tr('Nincs bejelentkezve', 'Neautentificat')
-          : tr('Nincs bejelentkezve', 'Neautentificat')
-        : S.user?.email || tr('Nincs bejelentkezve', 'Neautentificat');
+          ? clerk.email || ''
+          : ''
+        : S.user?.email || '';
 
       return (
         titleHeader(tr('Profil & Előfizetés', 'Profil & Abonament')) +
-        `<div class="px-margin-mobile pt-4 flex flex-col gap-space-lg">
-        <section class="bg-surface-container-lowest rounded-xl shadow-sm p-5 flex flex-col items-center text-center gap-1.5 relative overflow-hidden">
+        `<div class="${NARROW_X} pt-4 pb-6 flex flex-col gap-space-lg">
+        <section class="bg-surface-container-lowest rounded-2xl shadow-sm p-5 sm:p-6 flex flex-col items-center text-center gap-2 relative overflow-hidden border border-outline-variant/25">
           <div class="relative mb-1">
-            <span class="w-24 h-24 rounded-full bg-primary text-on-primary font-serif text-[38px] flex items-center justify-center ring-4 ring-secondary/20">${
-              signedIn ? esc(uName[0].toUpperCase()) : icon('person', 'text-[40px]')
+            <span class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-on-primary font-serif text-[34px] sm:text-[38px] flex items-center justify-center ring-4 ring-secondary/20">${
+              signedIn && uName ? esc(uName[0].toUpperCase()) : icon('person', 'text-[38px]')
             }</span>
-            <span class="absolute -bottom-1 right-0 ${
-              hasSub() ? 'bg-tertiary text-on-tertiary' : 'bg-secondary text-on-secondary'
-            } text-label-sm px-2.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">${icon(
-          hasSub() ? 'workspace_premium' : 'local_fire_department',
-          'fill text-[13px]'
-        )}${hasSub() ? tr('Vebeat Prémium', 'Vebeat Premium') : tr('Ingyenes csomag', 'Plan Gratuit')}</span>
-          </div>
-          <h2 class="font-serif text-headline-md text-primary mt-1">${esc(uName)}</h2>
-          <p class="text-body-md text-on-surface-variant">${esc(
-            S.user?.bio || tr('Lelkes házi séf & Receptalkotó', 'Bucătar pasionat & Creator de rețete')
-          )}</p>
-          <p class="text-label-md text-on-surface-variant flex items-center gap-1">${icon(
-            'mail',
-            'text-secondary text-[14px]'
-          )}${esc(uEmail)}</p>
-          ${
-            edit
-              ? `<form data-form="profile" class="w-full mt-3 pt-3 border-t border-outline-variant/40 flex flex-col gap-2 text-left">
-            <input name="name" required maxlength="60" placeholder="${tr('Neved', 'Numele tău')}" value="${esc(
-              S.user?.name || ''
-            )}" class="w-full h-10 px-3 rounded-lg bg-surface-container-low">
-            <input name="bio" maxlength="100" placeholder="${tr('Rövid bemutatkozás', 'Scurtă descriere')}" value="${esc(
-              S.user?.bio || tr('Lelkes házi séf & Receptalkotó', 'Bucătar pasionat & Creator de rețete')
-            )}" class="w-full h-10 px-3 rounded-lg bg-surface-container-low">
-            <input name="email" type="email" placeholder="E-mail" value="${esc(
-              S.user?.email || ''
-            )}" class="w-full h-10 px-3 rounded-lg bg-surface-container-low">
-            <div class="flex gap-2 justify-end"><a href="#/profil?t=${esc(
-              tab
-            )}" data-replace class="h-9 px-3 rounded-lg bg-surface-container text-label-md flex items-center">${tr('Mégse', 'Anulează')}</a><button class="h-9 px-4 rounded-lg bg-secondary text-on-secondary text-label-md">${tr('Mentés', 'Salvează')}</button></div>
-          </form>`
-              : `<div class="flex flex-wrap justify-center gap-2 mt-2">
-            <a href="#/profil?t=${esc(
-              tab
-            )}&edit=1" data-replace class="h-9 px-3.5 rounded-lg bg-surface-container-low hover:bg-surface-container-high text-primary text-label-md flex items-center gap-1">${icon(
-                  'edit',
-                  'text-[16px]'
-                )}${tr('Profil szerkesztése', 'Editează profilul')}</a>
             ${
               signedIn
-                ? ''
-                : `<a href="#/belepes" class="h-9 px-3.5 rounded-lg bg-secondary text-on-secondary text-label-md flex items-center gap-1">${icon(
-                    'login',
+                ? `<span class="absolute -bottom-1 right-0 ${
+                    hasSub() ? 'bg-tertiary text-on-tertiary' : 'bg-secondary text-on-secondary'
+                  } text-label-sm px-2.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm whitespace-nowrap">${icon(
+                    hasSub() ? 'workspace_premium' : 'local_fire_department',
+                    'fill text-[13px]'
+                  )}${hasSub() ? tr('Vebeat Prémium', 'Vebeat Premium') : tr('Ingyenes csomag', 'Plan Gratuit')}</span>`
+                : ''
+            }
+          </div>
+          ${
+            signedIn
+              ? `<h2 class="font-serif text-headline-md text-primary mt-1">${esc(uName || tr('Vebeat Fiók', 'Cont Vebeat'))}</h2>
+                 <p class="text-body-md text-on-surface-variant">${esc(
+                   S.user?.bio || tr('Lelkes házi séf & Receptalkotó', 'Bucătar pasionat & Creator de rețete')
+                 )}</p>
+                 ${
+                   uEmail
+                     ? `<p class="text-label-md text-on-surface-variant flex items-center justify-center gap-1 break-all">${icon(
+                         'mail',
+                         'text-secondary text-[14px] shrink-0'
+                       )}${esc(uEmail)}</p>`
+                     : ''
+                 }`
+              : `<h2 class="font-serif text-headline-sm sm:text-headline-md text-primary mt-1">${tr(
+                  'Nem vagy bejelentkezve',
+                  'Nu ești autentificat'
+                )}</h2>
+                 <p class="text-body-sm text-on-surface-variant max-w-md">${tr(
+                   'Jelentkezz be vagy hozz létre fiókot az előfizetésed, kedvenc receptjeid és jegyzeteid mentéséhez.',
+                   'Autentifică-te sau creează un cont pentru a-ți salva abonamentul, rețetele favorite și notițele.'
+                 )}</p>`
+          }
+          ${
+            signedIn && edit
+              ? `<form data-form="profile" class="w-full mt-3 pt-3 border-t border-outline-variant/40 flex flex-col gap-2 text-left">
+            <input name="name" required maxlength="60" placeholder="${tr('Neved', 'Numele tău')}" value="${esc(
+              S.user?.name || uName
+            )}" class="w-full h-11 px-3 rounded-lg bg-surface-container-low">
+            <input name="bio" maxlength="100" placeholder="${tr('Rövid bemutatkozás', 'Scurtă descriere')}" value="${esc(
+              S.user?.bio || tr('Lelkes házi séf & Receptalkotó', 'Bucătar pasionat & Creator de rețete')
+            )}" class="w-full h-11 px-3 rounded-lg bg-surface-container-low">
+            <input name="email" type="email" placeholder="E-mail" value="${esc(
+              S.user?.email || uEmail
+            )}" class="w-full h-11 px-3 rounded-lg bg-surface-container-low">
+            <div class="flex gap-2 justify-end pt-1"><a href="#/profil?t=${esc(
+              tab
+            )}" data-replace class="min-h-[38px] px-3.5 rounded-lg bg-surface-container text-label-md flex items-center">${tr('Mégse', 'Anulează')}</a><button class="min-h-[38px] px-4 rounded-lg bg-secondary text-on-secondary text-label-md">${tr('Mentés', 'Salvează')}</button></div>
+          </form>`
+              : `<div class="flex flex-wrap justify-center gap-2 mt-2">
+            ${
+              signedIn
+                ? `<a href="#/profil?t=${esc(
+                    tab
+                  )}&edit=1" data-replace class="min-h-[40px] px-4 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-primary text-label-md flex items-center gap-1.5">${icon(
+                    'edit',
                     'text-[16px]'
-                  )}${tr('Bejelentkezés (Clerk)', 'Autentificare (Clerk)')}</a>`
+                  )}${tr('Profil szerkesztése', 'Editează profilul')}</a>`
+                : `<a href="#/belepes" class="min-h-[42px] px-5 rounded-xl bg-secondary text-on-secondary text-label-md font-semibold flex items-center gap-1.5 shadow-sm hover:opacity-95">${icon(
+                    'login',
+                    'text-[18px]'
+                  )}${tr('Bejelentkezés', 'Autentificare')}</a>
+                   <a href="#/belepes?m=reg" class="min-h-[42px] px-4 rounded-xl bg-surface-container-high text-primary text-label-md font-semibold flex items-center gap-1.5 hover:bg-surface-container-highest">${icon(
+                     'person_add',
+                     'text-[18px]'
+                   )}${tr('Regisztráció', 'Creează cont')}</a>`
             }
           </div>`
           }
@@ -2781,18 +2831,20 @@ export function App() {
         <section class="flex flex-col gap-2">
           <h3 class="text-title-md text-primary">${tr('Konyhai & Fiók beállítások', 'Setări bucătărie & cont')}</h3>
           <div class="bg-surface-container-lowest rounded-xl shadow-sm divide-y divide-outline-variant/30">
-            <div class="w-full p-4 flex items-center gap-3 text-left">
-              <span class="w-9 h-9 rounded-full bg-secondary-fixed/60 flex items-center justify-center shrink-0">${icon(
-                'translate',
-                'text-secondary'
-              )}</span>
-              <span class="flex-1 min-w-0">
-                <span class="block text-title-md">${tr('Az oldal nyelve', 'Limba aplicației')}</span>
-                <span class="block text-body-sm text-on-surface-variant">${tr('Kiválasztva:', 'Selectată:')} <strong class="text-primary">${
-                S.lang === 'ro' ? 'Română (RO)' : 'Magyar (HU)'
-              }</strong></span>
-              </span>
-              <div class="inline-flex rounded-full bg-surface-container p-0.5 border border-outline-variant/30 shrink-0" role="group" aria-label="${tr('Nyelv kiválasztása', 'Selectează limba')}">
+            <div class="w-full p-4 flex flex-wrap items-center justify-between gap-3 text-left">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="w-9 h-9 rounded-full bg-secondary-fixed/60 flex items-center justify-center shrink-0">${icon(
+                  'translate',
+                  'text-secondary'
+                )}</span>
+                <span class="min-w-0">
+                  <span class="block text-title-md">${tr('Az oldal nyelve', 'Limba aplicației')}</span>
+                  <span class="block text-body-sm text-on-surface-variant">${tr('Kiválasztva:', 'Selectată:')} <strong class="text-primary">${
+                  S.lang === 'ro' ? 'Română (RO)' : 'Magyar (HU)'
+                }</strong></span>
+                </span>
+              </div>
+              <div class="inline-flex rounded-full bg-surface-container p-0.5 border border-outline-variant/30 shrink-0 ml-auto" role="group" aria-label="${tr('Nyelv kiválasztása', 'Selectează limba')}">
                 <button type="button" data-act="pickLang" data-lang="hu" aria-pressed="${S.lang === 'hu'}" class="px-2.5 py-1 rounded-full text-label-sm font-semibold transition ${
                 S.lang === 'hu'
                   ? 'bg-primary text-on-primary shadow-sm'
@@ -2897,7 +2949,7 @@ export function App() {
     function viewAuth({ q }: { q: URLSearchParams }) {
       const reg = q.get('m') === 'reg';
       const returnSlug = q.get('return') || '';
-      return `<div class="px-margin-mobile pt-4 pb-10 flex flex-col gap-space-md">
+      return `<div class="w-full max-w-lg mx-auto px-3.5 sm:px-6 pt-4 pb-6 flex flex-col gap-space-md">
         <header class="flex items-center justify-between">
           <button type="button" data-act="back" aria-label="${tr('Bezárás', 'Închide')}" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-high">${icon(
             'close',
@@ -2963,7 +3015,7 @@ export function App() {
                     'person',
                     'text-[15px]'
                   )}${tr('Teljes név', 'Nume complet')}</span>
-                  <input id="name" name="name" type="text" required maxlength="60" autocomplete="name" placeholder="${tr('Kovács Eszter', 'Elena Popescu')}" class="w-full bg-transparent py-1 text-body-md focus:outline-none">
+                  <input id="name" name="name" type="text" required maxlength="60" autocomplete="name" placeholder="${tr('Teljes neved', 'Numele tău')}" class="w-full bg-transparent py-1 text-body-md focus:outline-none">
                 </label>`
                     : ''
                 }
@@ -3029,7 +3081,7 @@ export function App() {
         titleHeader(r ? tr('Recept szerkesztése', 'Editează rețeta') : tr('Új recept', 'Rețetă nouă')) +
         `<form data-form="recipe" data-id="${esc(
           r?.id || ''
-        )}" novalidate class="px-margin-mobile pt-4 flex flex-col gap-4">
+        )}" novalidate class="${NARROW_X} pt-4 pb-6 flex flex-col gap-4">
         ${lbl(
           tr('Recept neve *', 'Numele rețetei *'),
           `<input name="title" required maxlength="200" class="${inp}" value="${esc(
@@ -3111,7 +3163,7 @@ export function App() {
     function viewNotFound() {
       return (
         titleHeader(tr('Nem található', 'Nu a fost găsit')) +
-        `<div class="px-margin-mobile py-16 text-center"><p class="text-on-surface-variant">${tr('Ez a recept nem létezik vagy törölve lett.', 'Această rețetă nu există sau a fost ștearsă.')}</p><a href="#/" class="inline-block mt-4 text-secondary text-title-md">${tr('Vissza a főoldalra', 'Înapoi la pagina principală')}</a></div>`
+        `<div class="${NARROW_X} py-16 text-center"><p class="text-on-surface-variant">${tr('Ez a recept nem létezik vagy törölve lett.', 'Această rețetă nu există sau a fost ștearsă.')}</p><a href="#/" class="inline-block mt-4 text-secondary text-title-md">${tr('Vissza a főoldalra', 'Înapoi la pagina principală')}</a></div>`
       );
     }
 
@@ -3842,8 +3894,8 @@ export function App() {
         let r = recipeDetailsCache[id];
         if (!r) {
           $app.innerHTML =
-            titleHeader(tr('Betöltés...', 'Se încarcă...')) +
-            `<div class="px-margin-mobile py-20 text-center text-on-surface-variant">${tr('Recept ellenőrzése és betöltése a szerverről...', 'Se verifică și se încarcă rețeta de pe server...')}</div>`;
+            brandHeader() +
+            `<div class="${PAGE_X} py-20 text-center text-on-surface-variant">${tr('Recept ellenőrzése és betöltése a szerverről...', 'Se verifică și se încarcă rețeta de pe server...')}</div>`;
           r = await fetchRecipeDetail(id);
         }
         if (page === 'r') {
@@ -3998,7 +4050,7 @@ export function App() {
   }, [clerk.isLoaded, clerk.isSignedIn, clerk.userId]);
 
   return (
-    <div className="max-w-[480px] mx-auto min-h-screen relative bg-surface">
+    <div className="w-full min-h-[100dvh] relative bg-surface">
       {clerk.enabled && (
         <div ref={clerkMountRef} className="hidden">
           {clerk.renderUserButton()}
@@ -4006,7 +4058,7 @@ export function App() {
       )}
       <main id="app" ref={appRef} className="pb-28"></main>
       {clerk.enabled && clerkAuthView.open && (
-        <div className="px-margin-mobile pb-10">
+        <div className="w-full max-w-lg mx-auto px-3.5 sm:px-6 pb-12">
           {clerk.isLoaded ? (
             clerkAuthView.reg ? (
               clerk.renderSignUp()
@@ -4022,61 +4074,63 @@ export function App() {
       )}
       <nav
         id="tabbar"
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 pb-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_-4px_16px_rgba(44,62,45,0.04)]"
+        className="fixed-bottom-bar z-40 pb-safe bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant/40 shadow-[0_-4px_20px_rgba(44,62,45,0.06)]"
         aria-label="Fő navigáció"
       >
-        <div className="flex justify-around items-center h-20">
+        <div className="max-w-xl mx-auto px-1 sm:px-4 flex justify-around items-center h-[68px] sm:h-[72px]">
           <a
             href="#/"
             data-tab="home"
-            className="flex flex-col items-center gap-1 min-w-[60px] text-on-surface-variant"
+            className="flex-1 min-w-0 py-1.5 flex flex-col items-center justify-center gap-0.5 text-center text-on-surface-variant"
           >
-            <span className="material-symbols-outlined text-[24px]">explore</span>
-            <span data-tablabel className="text-label-sm">Felfedezés</span>
+            <span className="material-symbols-outlined text-[22px] sm:text-[24px]">explore</span>
+            <span data-tablabel className="text-[10px] sm:text-label-sm leading-tight truncate max-w-full px-0.5">Felfedezés</span>
           </a>
           <a
             href="#/kereses?szezonalis=1"
             data-tab="szezonalis"
-            className="flex flex-col items-center gap-1 min-w-[60px] text-on-surface-variant"
+            className="flex-1 min-w-0 py-1.5 flex flex-col items-center justify-center gap-0.5 text-center text-on-surface-variant"
           >
-            <span className="material-symbols-outlined text-[24px]">nest_eco_leaf</span>
-            <span data-tablabel className="text-label-sm">Szezonális</span>
+            <span className="material-symbols-outlined text-[22px] sm:text-[24px]">nest_eco_leaf</span>
+            <span data-tablabel className="text-[10px] sm:text-label-sm leading-tight truncate max-w-full px-0.5">Szezonális</span>
           </a>
           <a
             href="#/uj"
             data-tab="uj"
             aria-label="Új recept"
-            className="flex flex-col items-center -mt-3"
+            className="flex-1 min-w-0 flex flex-col items-center justify-center -mt-3.5"
           >
-            <span className="w-11 h-11 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-md">
-              <span className="material-symbols-outlined text-[24px]">add</span>
+            <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-md shrink-0">
+              <span className="material-symbols-outlined text-[22px] sm:text-[24px]">add</span>
             </span>
-            <span data-tablabel className="text-label-sm text-secondary mt-0.5">Új recept</span>
+            <span data-tablabel className="text-[10px] sm:text-label-sm text-secondary mt-0.5 leading-tight truncate max-w-full px-0.5">Új recept</span>
           </a>
           <a
             href="#/kereses"
             data-tab="kereses"
-            className="flex flex-col items-center gap-1 min-w-[60px] text-on-surface-variant"
+            className="flex-1 min-w-0 py-1.5 flex flex-col items-center justify-center gap-0.5 text-center text-on-surface-variant"
           >
-            <span className="material-symbols-outlined text-[24px]">menu_book</span>
-            <span data-tablabel className="text-label-sm">Kategóriák</span>
+            <span className="material-symbols-outlined text-[22px] sm:text-[24px]">menu_book</span>
+            <span data-tablabel className="text-[10px] sm:text-label-sm leading-tight truncate max-w-full px-0.5">Kategóriák</span>
           </a>
           <a
             href="#/profil"
             data-tab="profil"
-            className="flex flex-col items-center gap-1 min-w-[60px] text-on-surface-variant"
+            className="flex-1 min-w-0 py-1.5 flex flex-col items-center justify-center gap-0.5 text-center text-on-surface-variant"
           >
-            <span className="material-symbols-outlined text-[24px]">bookmark</span>
-            <span data-tablabel className="text-label-sm">Gyűjtemény</span>
+            <span className="material-symbols-outlined text-[22px] sm:text-[24px]">bookmark</span>
+            <span data-tablabel className="text-[10px] sm:text-label-sm leading-tight truncate max-w-full px-0.5">Gyűjtemény</span>
           </a>
         </div>
       </nav>
-      <div
-        id="toast"
-        role="status"
-        aria-live="polite"
-        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-primary text-on-primary text-label-md shadow-lg opacity-0 pointer-events-none transition-opacity"
-      ></div>
+      <div className="fixed-floating-overlay bottom-24 z-50 px-4 flex justify-center pointer-events-none">
+        <div
+          id="toast"
+          role="status"
+          aria-live="polite"
+          className="max-w-md px-4 py-2 rounded-full bg-primary text-on-primary text-label-md text-center shadow-lg opacity-0 transition-opacity"
+        ></div>
+      </div>
     </div>
   );
 }

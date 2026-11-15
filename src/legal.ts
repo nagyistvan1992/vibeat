@@ -100,49 +100,50 @@ export function anpcSalBadgeHtml(lang: 'hu' | 'ro'): string {
 
 export function siteFooterHtml(lang: 'hu' | 'ro'): string {
   const tr = (hu: string, ro: string) => (lang === 'ro' ? ro : hu);
-  return `<footer class="mt-8 border-t border-outline-variant/40 bg-surface-container-low/80 px-margin-mobile pt-6 pb-8 flex flex-col gap-5 text-body-sm text-on-surface-variant no-print">
-    <div class="flex items-center justify-between gap-2">
-      <a href="#/" class="flex items-center gap-1.5">
-        <span class="material-symbols-outlined text-secondary text-[20px]" aria-hidden="true">local_dining</span>
-        <span class="font-serif text-title-md text-primary leading-none">Vebeat</span>
-      </a>
-      <span class="text-label-sm text-secondary">Fuel your daily vibe.</span>
-    </div>
+  return `<footer class="mt-10 border-t border-outline-variant/40 bg-surface-container-low/80 no-print">
+    <div class="max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-6 pb-8 flex flex-col gap-5 text-body-sm text-on-surface-variant">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <a href="#/" class="flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-secondary text-[20px]" aria-hidden="true">local_dining</span>
+          <span class="font-serif text-title-md text-primary leading-none">Vebeat</span>
+        </a>
+        <span class="text-label-sm text-secondary">Fuel your daily vibe.</span>
+      </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <nav aria-label="${tr('Gyors navigáció', 'Navigare rapidă')}" class="flex flex-col gap-1.5">
-        <span class="text-label-sm uppercase tracking-wider text-primary mb-0.5">${tr('Oldalak', 'Pagini')}</span>
-        <a href="#/" class="hover:text-primary hover:underline">${tr('Felfedezés', 'Descoperă')}</a>
-        <a href="#/kereses" class="hover:text-primary hover:underline">${tr('Kategóriák & Keresés', 'Categorii & Căutare')}</a>
-        <a href="#/kereses?szezonalis=1" class="hover:text-primary hover:underline">${tr('Szezonális receptek', 'Rețete de sezon')}</a>
-        <a href="#/elofizetes" class="hover:text-primary hover:underline font-semibold text-secondary">${tr('Vebeat Prémium', 'Vebeat Premium')}</a>
-        <a href="#/profil" class="hover:text-primary hover:underline">${tr('Profil & Gyűjtemény', 'Profil & Colecție')}</a>
-      </nav>
-      <nav aria-label="${tr('Jogi dokumentumok', 'Informații legale')}" class="flex flex-col gap-1.5">
-        <span class="text-label-sm uppercase tracking-wider text-primary mb-0.5">${tr('Jogi megfelelőség (RO/UE)', 'Conformitate legală (RO/UE)')}</span>
-        <a href="#/jogi/aszf" class="hover:text-primary hover:underline">${tr('ÁSZF & Feltételek', 'Termeni și Condiții')}</a>
-        <a href="#/jogi/adatvedelem" class="hover:text-primary hover:underline">${tr('Adatvédelem (GDPR)', 'Confidențialitate (GDPR)')}</a>
-        <a href="#/jogi/sutik" class="hover:text-primary hover:underline">${tr('Cookie tájékoztató', 'Politica de Cookies')}</a>
-        <a href="#/jogi/elallas" class="hover:text-primary hover:underline">${tr('Elállás & Lemondás', 'Retragere & Anulare')}</a>
-        <a href="#/jogi/kapcsolat" class="hover:text-primary hover:underline">${tr('Üzemeltető & Kapcsolat', 'Date Firmă & Contact')}</a>
-      </nav>
-    </div>
+      <div class="grid grid-cols-1 min-[360px]:grid-cols-2 md:grid-cols-3 gap-5">
+        <nav aria-label="${tr('Gyors navigáció', 'Navigare rapidă')}" class="flex flex-col gap-1.5">
+          <span class="text-label-sm uppercase tracking-wider text-primary mb-0.5">${tr('Oldalak', 'Pagini')}</span>
+          <a href="#/" class="hover:text-primary hover:underline py-0.5">${tr('Felfedezés', 'Descoperă')}</a>
+          <a href="#/kereses" class="hover:text-primary hover:underline py-0.5">${tr('Kategóriák & Keresés', 'Categorii & Căutare')}</a>
+          <a href="#/kereses?szezonalis=1" class="hover:text-primary hover:underline py-0.5">${tr('Szezonális receptek', 'Rețete de sezon')}</a>
+          <a href="#/elofizetes" class="hover:text-primary hover:underline font-semibold text-secondary py-0.5">${tr('Vebeat Prémium', 'Vebeat Premium')}</a>
+          <a href="#/profil" class="hover:text-primary hover:underline py-0.5">${tr('Profil & Gyűjtemény', 'Profil & Colecție')}</a>
+        </nav>
+        <nav aria-label="${tr('Jogi dokumentumok', 'Informații legale')}" class="flex flex-col gap-1.5">
+          <span class="text-label-sm uppercase tracking-wider text-primary mb-0.5">${tr('Jogi megfelelőség (RO/UE)', 'Conformitate legală (RO/UE)')}</span>
+          <a href="#/jogi/aszf" class="hover:text-primary hover:underline py-0.5">${tr('ÁSZF & Feltételek', 'Termeni și Condiții')}</a>
+          <a href="#/jogi/adatvedelem" class="hover:text-primary hover:underline py-0.5">${tr('Adatvédelem (GDPR)', 'Confidențialitate (GDPR)')}</a>
+          <a href="#/jogi/sutik" class="hover:text-primary hover:underline py-0.5">${tr('Cookie tájékoztató', 'Politica de Cookies')}</a>
+          <a href="#/jogi/elallas" class="hover:text-primary hover:underline py-0.5">${tr('Elállás & Lemondás', 'Retragere & Anulare')}</a>
+          <a href="#/jogi/kapcsolat" class="hover:text-primary hover:underline py-0.5">${tr('Üzemeltető & Kapcsolat', 'Date Firmă & Contact')}</a>
+        </nav>
+        <div class="min-[360px]:col-span-2 md:col-span-1 rounded-xl bg-surface-container-lowest/90 border border-outline-variant/30 p-3.5 text-[11px] leading-relaxed flex flex-col gap-1">
+          <p class="font-semibold text-primary">${esc(LEGAL_OPERATOR.company[lang])}</p>
+          <p>CUI: ${esc(LEGAL_OPERATOR.cui)} • Reg. Com.: ${esc(LEGAL_OPERATOR.regCom)}</p>
+          <p>${tr('Székhely', 'Sediu social')}: ${esc(LEGAL_OPERATOR.address[lang])}</p>
+          <p>E-mail: <a href="mailto:${LEGAL_OPERATOR.email}" class="underline text-primary break-all">${LEGAL_OPERATOR.email}</a> • Tel: ${LEGAL_OPERATOR.phone}</p>
+        </div>
+      </div>
 
-    ${anpcSalBadgeHtml(lang)}
+      ${anpcSalBadgeHtml(lang)}
 
-    <div class="rounded-xl bg-surface-container-lowest/90 border border-outline-variant/30 p-3 text-[11px] leading-relaxed flex flex-col gap-1">
-      <p class="font-semibold text-primary">${esc(LEGAL_OPERATOR.company[lang])}</p>
-      <p>CUI: ${esc(LEGAL_OPERATOR.cui)} • Reg. Com.: ${esc(LEGAL_OPERATOR.regCom)}</p>
-      <p>${tr('Székhely', 'Sediu social')}: ${esc(LEGAL_OPERATOR.address[lang])}</p>
-      <p>E-mail: <a href="mailto:${LEGAL_OPERATOR.email}" class="underline text-primary">${LEGAL_OPERATOR.email}</a> • Tel: ${LEGAL_OPERATOR.phone}</p>
-    </div>
-
-    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-outline-variant/25 text-[11px]">
-      <span>© ${new Date().getFullYear()} Vebeat • ${tr('Minden jog fenntartva.', 'Toate drepturile rezervate.')}</span>
-      <button type="button" data-act="openCookiePrefs" class="underline text-primary hover:text-secondary font-medium">${tr(
-        'Cookie beállítások módosítása',
-        'Preferințe Cookies'
-      )}</button>
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-outline-variant/25 text-[11px]">
+        <span>© ${new Date().getFullYear()} Vebeat • ${tr('Minden jog fenntartva.', 'Toate drepturile rezervate.')}</span>
+        <button type="button" data-act="openCookiePrefs" class="underline text-primary hover:text-secondary font-medium py-1">${tr(
+          'Cookie beállítások módosítása',
+          'Preferințe Cookies'
+        )}</button>
+      </div>
     </div>
   </footer>`;
 }
@@ -152,38 +153,40 @@ export function cookieBannerHtml(lang: 'hu' | 'ro'): string {
   return `<aside id="cookie-banner" role="dialog" aria-label="${tr(
     'Cookie és adatvédelmi hozzájárulás',
     'Consimțământ Cookies și GDPR'
-  )}" class="fixed bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[456px] z-50 bg-surface-container-lowest border border-primary/25 rounded-2xl shadow-2xl p-4 flex flex-col gap-3 no-print">
-    <div class="flex items-start gap-2.5">
-      <span class="w-9 h-9 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center shrink-0">
-        <span class="material-symbols-outlined text-[20px]" aria-hidden="true">cookie</span>
-      </span>
-      <div class="min-w-0 flex-1">
-        <p class="font-serif text-title-md text-primary leading-tight">${tr(
-          'Adatvédelem & Sütik (GDPR / Legea 506/2004)',
-          'Confidențialitate & Cookies (GDPR / Legea 506/2004)'
-        )}</p>
-        <p class="text-[12px] text-on-surface-variant leading-relaxed mt-1">${tr(
-          'A Vebeat alapvető sütiket és böngészőtárolót használ a bejelentkezéshez, a nyelvhez és a Stripe fizetéshez. Az opcionális kényelmi beállítások csak az engedélyeddel aktiválódnak.',
-          'Vebeat folosește stocare strict necesară pentru autentificare, limba aleasă și plata securizată Stripe. Preferințele opționale se activează doar cu acordul tău explicit.'
-        )}</p>
+  )}" class="fixed-floating-overlay bottom-[82px] sm:bottom-[88px] z-50 px-3 sm:px-6 pointer-events-none no-print">
+    <div class="max-w-lg mx-auto bg-surface-container-lowest border border-primary/25 rounded-2xl shadow-2xl p-4 flex flex-col gap-3 pointer-events-auto">
+      <div class="flex items-start gap-2.5">
+        <span class="w-9 h-9 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true">cookie</span>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="font-serif text-title-md text-primary leading-tight">${tr(
+            'Adatvédelem & Sütik (GDPR / Legea 506/2004)',
+            'Confidențialitate & Cookies (GDPR / Legea 506/2004)'
+          )}</p>
+          <p class="text-[12px] text-on-surface-variant leading-relaxed mt-1">${tr(
+            'A Vebeat alapvető sütiket és böngészőtárolót használ a bejelentkezéshez, a nyelvhez és a Stripe fizetéshez. Az opcionális kényelmi beállítások csak az engedélyeddel aktiválódnak.',
+            'Vebeat folosește stocare strict necesară pentru autentificare, limba aleasă și plata securizată Stripe. Preferințele opționale se activează doar cu acordul tău explicit.'
+          )}</p>
+        </div>
       </div>
-    </div>
-    <div class="grid grid-cols-2 gap-2">
-      <button type="button" data-act="cookieEssential" class="h-10 px-3 rounded-xl bg-surface-container text-primary text-label-md hover:bg-surface-container-high transition">${tr(
-        'Csak szükségesek',
-        'Doar esențiale'
-      )}</button>
-      <button type="button" data-act="cookieAll" class="h-10 px-3 rounded-xl bg-primary text-on-primary text-label-md shadow-sm hover:opacity-95 transition">${tr(
-        'Összes elfogadása',
-        'Acceptă toate'
-      )}</button>
-    </div>
-    <div class="flex items-center justify-between text-[11px] text-on-surface-variant pt-0.5">
-      <a href="#/jogi/sutik" class="underline text-secondary font-medium">${tr(
-        'Részletes Cookie & GDPR beállítások',
-        'Setări detaliate & Politica de Cookies'
-      )}</a>
-      <a href="#/jogi/adatvedelem" class="underline hover:text-primary">${tr('Adatvédelmi tájékoztató', 'Confidențialitate')}</a>
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" data-act="cookieEssential" class="min-h-[42px] px-3 rounded-xl bg-surface-container text-primary text-label-md hover:bg-surface-container-high transition">${tr(
+          'Csak szükségesek',
+          'Doar esențiale'
+        )}</button>
+        <button type="button" data-act="cookieAll" class="min-h-[42px] px-3 rounded-xl bg-primary text-on-primary text-label-md shadow-sm hover:opacity-95 transition">${tr(
+          'Összes elfogadása',
+          'Acceptă toate'
+        )}</button>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-on-surface-variant pt-0.5">
+        <a href="#/jogi/sutik" class="underline text-secondary font-medium">${tr(
+          'Részletes Cookie & GDPR beállítások',
+          'Setări detaliate & Politica de Cookies'
+        )}</a>
+        <a href="#/jogi/adatvedelem" class="underline hover:text-primary">${tr('Adatvédelmi tájékoztató', 'Confidențialitate')}</a>
+      </div>
     </div>
   </aside>`;
 }
@@ -208,7 +211,7 @@ export function viewLegalContent(
     ['kapcsolat', tr('Cégadatok', 'Contact & Firmă')],
   ];
 
-  const navPills = `<nav aria-label="${tr('Jogi menü', 'Meniu legal')}" class="flex gap-1.5 overflow-x-auto pb-1 -mx-margin-mobile px-margin-mobile no-scrollbar">
+  const navPills = `<nav aria-label="${tr('Jogi menü', 'Meniu legal')}" class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
     ${tabs
       .map(
         ([k, lbl]) => `<a href="#/jogi/${k}" data-replace class="px-3 py-1.5 rounded-full text-label-md whitespace-nowrap transition ${
@@ -229,7 +232,7 @@ export function viewLegalContent(
   if (section === 'aszf') {
     return {
       pageTitle: tr('Általános Szerződési Feltételek', 'Termeni și Condiții'),
-      bodyHtml: `<div class="px-margin-mobile pt-4 flex flex-col gap-4">
+      bodyHtml: `<div class="max-w-4xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 pb-6 flex flex-col gap-4">
         ${navPills}
         ${box(
           tr('1. Szolgáltató adatai (Legea 365/2002)', '1. Datele Operatorului (Legea nr. 365/2002)'),
@@ -297,7 +300,7 @@ export function viewLegalContent(
   if (section === 'adatvedelem') {
     return {
       pageTitle: tr('Adatvédelmi tájékoztató (GDPR)', 'Politica de Confidențialitate (GDPR)'),
-      bodyHtml: `<div class="px-margin-mobile pt-4 flex flex-col gap-4">
+      bodyHtml: `<div class="max-w-4xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 pb-6 flex flex-col gap-4">
         ${navPills}
         ${box(
           tr('1. Adatkezelő és jogalapok (Reg. UE 2016/679 & Legea 190/2018)', '1. Operator de date și temeiuri legale (GDPR & Legea 190/2018)'),
@@ -364,7 +367,7 @@ export function viewLegalContent(
           : tr('Még nincs kiválasztva', 'Neselectat încă');
     return {
       pageTitle: tr('Cookie tájékoztató & Beállítások', 'Politica de Cookies & Preferințe'),
-      bodyHtml: `<div class="px-margin-mobile pt-4 flex flex-col gap-4">
+      bodyHtml: `<div class="max-w-4xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 pb-6 flex flex-col gap-4">
         ${navPills}
         ${box(
           tr('Aktuális hozzájárulási állapotod (Legea 506/2004)', 'Statusul consimțământului tău (Legea nr. 506/2004)'),
@@ -398,7 +401,7 @@ export function viewLegalContent(
   if (section === 'elallas') {
     return {
       pageTitle: tr('Elállási jog & Lemondás', 'Drept de retragere & Anulare'),
-      bodyHtml: `<div class="px-margin-mobile pt-4 flex flex-col gap-4">
+      bodyHtml: `<div class="max-w-4xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 pb-6 flex flex-col gap-4">
         ${navPills}
         ${box(
           tr('Gyors előfizetés-lemondás (OUG 34/2014 & EU 2023/2673)', 'Anulare rapidă abonament (OUG 34/2014 & Directiva UE 2023/2673)'),
@@ -438,7 +441,7 @@ export function viewLegalContent(
               <span class="text-label-sm uppercase text-on-surface-variant">${tr('Teljes név *', 'Nume complet *')}</span>
               <input name="fullName" required maxlength="80" value="${esc(
                 opts.userName || ''
-              )}" placeholder="${tr('pl. Kovács Eszter', 'ex. Elena Popescu')}" class="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/40">
+              )}" placeholder="${tr('pl. Teljes neved', 'ex. Numele complet')}" class="w-full h-10 px-3 rounded-lg bg-surface-container-low border border-outline-variant/40">
             </label>
             <label class="flex flex-col gap-1">
               <span class="text-label-sm uppercase text-on-surface-variant">${tr('Fiók e-mail címe *', 'E-mail cont *')}</span>
@@ -472,7 +475,7 @@ export function viewLegalContent(
   // 'kapcsolat'
   return {
     pageTitle: tr('Üzemeltetői adatok & Kapcsolat', 'Date Firmă & Contact'),
-    bodyHtml: `<div class="px-margin-mobile pt-4 flex flex-col gap-4">
+    bodyHtml: `<div class="max-w-4xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 pb-6 flex flex-col gap-4">
       ${navPills}
       ${box(
         tr('Üzemeltető azonosító adatai (Legea 365/2002)', 'Date de identificare comerciant (Legea nr. 365/2002)'),
