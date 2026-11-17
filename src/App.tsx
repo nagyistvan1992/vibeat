@@ -1199,17 +1199,148 @@ export function App() {
           `<div class="${PAGE_X} py-20 text-center text-on-surface-variant">${tr('Receptek betöltése a szerverről...', 'Se încarcă rețetele de pe server...')}</div>`
         );
       }
+      const freeCount = list.filter(r => Boolean(r.is_free || r.mine)).length;
       const premiumCount = list.filter(r => !r.is_free && !r.mine).length;
+      const subActive = hasSub();
       const f = list.find(r => r.featured) || list[0];
       const others = list.filter(r => r.id !== f.id);
       const popular = (others.length ? others : list)
         .slice()
         .sort((a, b) => (b.mine ? 9 : b.rating || 0) - (a.mine ? 9 : a.rating || 0))
         .slice(0, 8);
+      const userLoggedIn = isUserSignedIn();
+      const heroCtaHref = userLoggedIn ? '#/elofizetes' : '#/elofizetes?plan=yearly';
+
+      const topConversionHero = subActive
+        ? `<section class="rounded-2xl bg-primary text-on-primary p-4 sm:p-5 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-secondary/30">
+            <div class="flex items-start gap-3 min-w-0">
+              <span class="w-10 h-10 rounded-xl bg-secondary text-on-secondary flex items-center justify-center shrink-0">${icon('workspace_premium', 'fill text-[22px]')}</span>
+              <div class="min-w-0">
+                <p class="text-label-sm uppercase tracking-wider text-secondary-fixed">${tr('Vebeat Prémium fiók aktív', 'Cont Vebeat Premium activ')}</p>
+                <p class="text-body-sm text-surface-variant mt-0.5">${tr(
+                  `Mind a ${list.length} séf-recept, az adagoló és a Főzési Mód korlátlanul elérhető.`,
+                  `Ai acces nelimitat la toate cele ${list.length} rețete, calculatorul de porții și Modul de Gătit.`
+                )}</p>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <a href="#/kereses?f=Prémium" class="min-h-[42px] px-4 rounded-xl bg-secondary text-on-secondary text-label-lg font-semibold flex items-center gap-1.5 shadow-sm hover:opacity-95 transition">${icon('menu_book', 'text-[18px]')}${tr('Prémium receptek', 'Rețete Premium')}</a>
+              <button type="button" data-act="portal" class="min-h-[42px] px-3.5 rounded-xl bg-surface-container-lowest/15 hover:bg-surface-container-lowest/25 text-on-primary text-label-lg flex items-center gap-1.5 transition">${icon('credit_card', 'text-[18px]')}${tr('Fiók kezelése', 'Gestionează')}</button>
+            </div>
+          </section>`
+        : `<section aria-label="${tr('Vebeat Prémium bemutató', 'Prezentare Vebeat Premium')}" class="relative rounded-2xl bg-primary text-on-primary p-5 sm:p-7 overflow-hidden shadow-lg border border-secondary/30">
+            <div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-secondary/20 blur-2xl pointer-events-none"></div>
+            <div class="absolute -left-10 -bottom-12 w-40 h-40 rounded-full bg-primary-container/40 blur-xl pointer-events-none"></div>
+            <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 sm:gap-6">
+              <div class="flex flex-col gap-3 max-w-2xl min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-on-secondary text-[11px] font-bold uppercase tracking-wider shadow-sm">${icon('workspace_premium', 'fill text-[14px]')}${tr('Vebeat Prémium Fiók', 'Cont Vebeat Premium')}</span>
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-lowest/15 text-secondary-fixed text-[11px] font-semibold">${icon('verified', 'text-[14px]')}${tr(`${list.length} ellenőrzött recept`, `${list.length} rețete verificate`)}</span>
+                </div>
+                <h2 class="font-serif text-[26px] sm:text-[34px] leading-[1.15] tracking-tight">${tr(
+                  `Főzz tudatosan és gyorsabban — nyisd fel mind a ${premiumCount} prémium receptet!`,
+                  `Gătește rapid și echilibrat — deblochează toate cele ${premiumCount} rețete premium!`
+                )}</h2>
+                <p class="text-body-sm sm:text-body-md text-surface-variant/95 leading-relaxed">${tr(
+                  'Grammra pontos adagszámítás, lépésenkénti időzítő Főzési Mód, tápérték-elemzés és egykattintásos bevásárlólista — magyar és román nyelven.',
+                  'Cantități calculate exact la gram, Mod de Gătit pas cu pas cu cronometru, valori nutriționale și listă de cumpărături — în română și maghiară.'
+                )}</p>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-secondary-fixed/95 pt-0.5">
+                  <span class="inline-flex items-center gap-1">${icon('check_circle', 'fill text-[15px] text-secondary-fixed')}${tr('Lépésenkénti főzőmód', 'Mod de Gătit interactiv')}</span>
+                  <span class="inline-flex items-center gap-1">${icon('check_circle', 'fill text-[15px] text-secondary-fixed')}${tr('Pontos kalória & makrók', 'Calorii & macronutrienți exacți')}</span>
+                  <span class="inline-flex items-center gap-1">${icon('check_circle', 'fill text-[15px] text-secondary-fixed')}${tr('Bármikor lemondható', 'Anulare oricând')}</span>
+                </div>
+              </div>
+              <div class="flex flex-col gap-2.5 lg:w-[320px] shrink-0 bg-surface-container-lowest/10 backdrop-blur-sm rounded-2xl p-4 border border-surface-container-lowest/15">
+                <div class="flex items-baseline justify-between gap-2">
+                  <span class="text-label-sm uppercase tracking-wider text-secondary-fixed">${tr('Prémium tagság', 'Abonament Premium')}</span>
+                  <span class="px-2 py-0.5 rounded-full bg-secondary text-on-secondary text-[10px] font-bold">${tr('-33% ÉVES', '-33% ANUAL')}</span>
+                </div>
+                <div class="flex items-baseline gap-2 flex-wrap">
+                  <span class="font-serif text-[26px] leading-none text-on-primary">${esc(PLANS[S.lang].monthly.priceLabel)}</span>
+                  <span class="text-[12px] text-surface-variant">${tr('vagy', 'sau')} ${esc(PLANS[S.lang].yearly.shortLabel)}</span>
+                </div>
+                <a href="${heroCtaHref}" data-cta="hero-premium" class="w-full min-h-[48px] px-4 rounded-xl bg-secondary text-on-secondary text-title-md font-semibold flex items-center justify-center gap-2 shadow-md hover:bg-secondary/90 active:scale-[0.99] transition">
+                  ${icon('workspace_premium', 'fill text-[20px]')}
+                  <span>${tr('Prémium fiók aktiválása', 'Activează contul Premium')}</span>
+                  ${icon('arrow_forward', 'text-[18px]')}
+                </a>
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5 text-[12px]">
+                  <a href="#/kereses?f=Ingyenes" class="text-secondary-fixed hover:underline font-medium inline-flex items-center gap-1">${tr(`${freeCount} ingyenes recept`, `${freeCount} rețete gratuite`)}${icon('chevron_right', 'text-[15px]')}</a>
+                  ${
+                    userLoggedIn
+                      ? ''
+                      : `<a href="#/belepes" class="text-surface-variant hover:text-on-primary underline">${tr('Belépés', 'Autentificare')}</a>`
+                  }
+                </div>
+              </div>
+            </div>
+          </section>`;
+
+      const midConversionStrip = subActive
+        ? ''
+        : `<section aria-label="${tr('Prémium csomagok összehasonlítása', 'Comparație planuri Premium')}" class="rounded-2xl bg-surface-container-lowest border border-secondary/25 shadow-sm p-5 sm:p-6 flex flex-col gap-5">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+              <div class="flex flex-col gap-1.5 max-w-2xl">
+                <span class="text-label-sm uppercase tracking-wider text-secondary font-bold">${tr('Válassz hozzáférést', 'Alege accesul potrivit')}</span>
+                <h3 class="font-serif text-headline-sm sm:text-headline-md text-primary leading-tight">${tr(
+                  `Miért választják egyre többen a Vebeat Prémium fiókot?`,
+                  `De ce aleg tot mai mulți contul Vebeat Premium?`
+                )}</h3>
+                <p class="text-body-sm text-on-surface-variant">${tr(
+                  `A ${freeCount} ingyenes recept mellett azonnal megnyílik mind a ${premiumCount} exkluzív recept és minden kényelmi funkció.`,
+                  `Pe lângă cele ${freeCount} rețete gratuite, deblochezi instant toate cele ${premiumCount} rețete exclusive și funcțiile smart.`
+                )}</p>
+              </div>
+              <a href="#/elofizetes" class="self-start md:self-auto text-label-lg text-secondary font-semibold hover:underline inline-flex items-center gap-1 shrink-0">${tr('Összes csomag részletei', 'Detalii complete planuri')}${icon('arrow_forward', 'text-[17px]')}</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              ${[
+                ['menu_book', tr(`${premiumCount} Prémium recept`, `${premiumCount} Rețete Premium`), tr('Tradicionális, fitt, 10 perces és böjti fogások.', 'Rețete tradiționale, fit, gata în 10 min și de post.')],
+                ['timer', tr('Interaktív Főzési Mód', 'Mod de Gătit Interactiv'), tr('Beépített időzítővel és képernyő-ébrentartással.', 'Cu cronometru integrat și ecran mereu activ.')],
+                ['calculate', tr('Intelligens adagoló', 'Dozaj inteligent'), tr('Minden hozzávaló 1 kattintással átméretezve.', 'Toate ingredientele recalculate cu 1 click.')],
+                ['checklist', tr('Bevásárlólista export', 'Export listă cumpărături'), tr('Azonnali másolás vagy Google Keep export.', 'Copiere rapidă sau export în Google Keep.')],
+              ]
+                .map(
+                  ([ic, t, d]) =>
+                    `<div class="p-3.5 rounded-xl bg-surface-container-low/80 border border-outline-variant/25 flex items-start gap-2.5">
+                      <span class="w-8 h-8 rounded-lg bg-secondary-fixed/70 text-secondary flex items-center justify-center shrink-0">${icon(ic, 'text-[18px]')}</span>
+                      <div class="min-w-0">
+                        <p class="text-title-sm font-semibold text-primary leading-snug">${t}</p>
+                        <p class="text-[12px] text-on-surface-variant mt-0.5 leading-snug">${d}</p>
+                      </div>
+                    </div>`
+                )
+                .join('')}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="p-4 rounded-xl border border-outline-variant/40 bg-surface-container-low/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <span class="text-label-sm uppercase tracking-wider text-on-surface-variant">${tr('Havi Prémium', 'Premium Lunar')}</span>
+                  <p class="font-serif text-title-lg text-primary mt-0.5">${esc(PLANS[S.lang].monthly.priceLabel)}</p>
+                  <p class="text-[12px] text-on-surface-variant">${tr('Rugalmas havi előfizetés, bármikor lemondható.', 'Abonament flexibil, anulare oricând.')}</p>
+                </div>
+                <a href="#/elofizetes?plan=monthly" class="min-h-[44px] px-4 rounded-xl border border-primary/25 bg-surface-container-lowest text-primary text-label-lg font-semibold flex items-center justify-center gap-1.5 hover:bg-surface-container transition shrink-0">${tr('Havi csomag választása', 'Alege planul lunar')}</a>
+              </div>
+              <div class="p-4 rounded-xl border-2 border-secondary bg-secondary-fixed/25 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-label-sm uppercase tracking-wider text-secondary font-bold">${tr('Éves Prémium', 'Premium Anual')}</span>
+                    <span class="px-2 py-0.5 rounded-full bg-secondary text-on-secondary text-[10px] font-bold">${tr('LEGJOBB ÁR -33%', 'CEL MAI AVANTAJOS -33%')}</span>
+                  </div>
+                  <p class="font-serif text-title-lg text-primary mt-0.5">${esc(PLANS[S.lang].yearly.priceLabel)}</p>
+                  <p class="text-[12px] text-on-surface-variant">${esc(PLANS[S.lang].yearly.vatNote)}</p>
+                </div>
+                <a href="#/elofizetes?plan=yearly" class="min-h-[44px] px-4 rounded-xl bg-secondary text-on-secondary text-label-lg font-semibold flex items-center justify-center gap-1.5 shadow-sm hover:opacity-95 active:scale-[0.99] transition shrink-0">${icon('workspace_premium', 'fill text-[18px]')}${tr('Prémium fiók (-33%)', 'Cont Premium (-33%)')}</a>
+              </div>
+            </div>
+          </section>`;
 
       return (
         brandHeader() +
         `<div class="${PAGE_X} pt-4 sm:pt-6 flex flex-col gap-6 sm:gap-8">
+        ${topConversionHero}
+
         <section class="flex flex-col gap-3">
           <form data-form="search" role="search" class="relative">
             <span class="absolute inset-y-0 left-3.5 flex items-center text-outline pointer-events-none">${icon(
@@ -1266,7 +1397,7 @@ export function App() {
               <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent pointer-events-none"></div>
               <div class="absolute top-3 left-3 right-14 flex flex-wrap items-center gap-1.5">${accessBadge(
                 Boolean(f.is_free),
-                hasSub(),
+                subActive,
                 S.lang
               )}${ratingPill(f)}</div>
               <div class="absolute top-3 right-3">${favBtn(f.id)}</div>
@@ -1326,6 +1457,8 @@ export function App() {
           ${grid(popular)}
         </section>
 
+        ${midConversionStrip}
+
         ${seasonalRow()}
 
         <section class="relative bg-primary text-on-primary rounded-2xl p-5 sm:p-6 overflow-hidden shadow-md">
@@ -1333,41 +1466,40 @@ export function App() {
           <div class="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex flex-col gap-2 max-w-2xl">
               <div class="flex flex-wrap items-center gap-2"><span class="px-2.5 py-0.5 rounded-full bg-secondary text-label-sm uppercase tracking-wider">${tr('Vebeat Prémium', 'Vebeat Premium')}</span><span class="text-label-md text-on-primary-container">${
-                hasSub() ? tr('Aktív tagság', 'Abonament activ') : tr('Teljes hozzáférés', 'Acces complet')
+                subActive ? tr('Aktív tagság', 'Abonament activ') : tr('Teljes hozzáférés', 'Acces complet')
               }</span></div>
               <h4 class="font-serif text-headline-sm sm:text-headline-md leading-tight">${
-                hasSub()
+                subActive
                   ? tr('Köszönjük, hogy a Vebeat Prémium tagja vagy!', 'Îți mulțumim că ești membru Vebeat Premium!')
                   : tr(
-                      `Nyisd fel mind a ${list.length} séf-receptet és az interaktív Főzési Módot!`,
-                      `Deblochează toate cele ${list.length} rețete de chef și Modul Interactiv de Gătit!`
+                      `Készen állsz? Válts Prémium fiókra és oldd fel mind a ${list.length} receptet!`,
+                      `Ești pregătit? Treci la contul Premium și deblochează toate cele ${list.length} rețete!`
                     )
               }</h4>
               <p class="text-body-sm text-surface-variant">${
-                hasSub()
+                subActive
                   ? tr(
                       'Minden prémium recept, pontos grammos hozzávaló, időzítő és Google Keep export korlátlanul elérhető számodra.',
                       'Ai acces nelimitat la toate rețetele premium, ingredientele exacte la gram, cronometre și exportul în Google Keep.'
                     )
                   : tr(
-                      `Oldd fel a ${premiumCount} prémium nemzetközi, tradicionális, böjti és 10 perces receptet, a grammra pontos hozzávalókat és a séf-időzítőket.`,
-                      `Deblochează cele ${premiumCount} rețete premium internaționale, tradiționale, de post și gata în 10 minute, cu cantități exacte și cronometre integrate.`
+                      `Azonnali hozzáférés a ${premiumCount} prémium recepthez, adagszámítóhoz, séf-időzítőkhöz és bevásárlólistához — bankkártyával biztonságosan, a Stripe-on keresztül.`,
+                      `Acces instant la cele ${premiumCount} rețete premium, calculator de porții, cronometre și listă de cumpărături — plată securizată prin Stripe.`
                     )
               }</p>
             </div>
             ${
-              hasSub()
+              subActive
                 ? `<button type="button" data-act="portal" class="self-start md:self-center min-h-[44px] px-5 rounded-xl bg-surface-container-lowest text-primary text-title-md flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0">${icon(
                     'credit_card',
                     'text-[18px]'
                   )}${tr('Előfizetés kezelése', 'Gestionează abonamentul')}</button>`
-                : `<a href="#/elofizetes" class="self-start md:self-center min-h-[44px] px-5 rounded-xl bg-secondary text-on-secondary text-title-md flex items-center gap-1.5 shadow-sm active:scale-95 transition shrink-0">${icon(
-                    'workspace_premium',
-                    'fill text-[18px]'
-                  )}${tr(
-                    `Prémium előfizetés (${PLANS.hu.monthly.priceLabel})`,
-                    `Abonament Premium (${PLANS.ro.monthly.priceLabel})`
-                  )}</a>`
+                : `<div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <a href="#/elofizetes" class="min-h-[46px] px-5 rounded-xl bg-secondary text-on-secondary text-title-md font-semibold flex items-center gap-1.5 shadow-md hover:opacity-95 active:scale-95 transition shrink-0">${icon(
+                      'workspace_premium',
+                      'fill text-[18px]'
+                    )}${tr('Váltás Prémium fiókra', 'Treci la cont Premium')}</a>
+                  </div>`
             }
           </div>
         </section>
