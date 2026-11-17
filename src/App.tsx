@@ -408,6 +408,7 @@ export function App() {
     let currentSubscriptionStatus: 'free' | 'active' | 'past_due' | 'canceled' = 'free';
     let currentSubscriptionEnd: string | null = null;
     let selectedPlan: 'monthly' | 'yearly' = 'monthly';
+    let lastSubPlanRouteKey = '';
     let langMenuOpen = false;
     let langLoading: 'hu' | 'ro' | null = null;
     let cookiePrefsOpen = false;
@@ -1035,7 +1036,7 @@ export function App() {
     };
 
     function brandHeader() {
-      return `<header class="sticky top-0 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.03)] no-print">
+      return `<header class="sticky top-0 z-30 gpu-sticky-header bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.03)] no-print">
         <div class="max-w-6xl mx-auto h-16 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
           <a href="#/" class="flex items-center gap-1.5 min-w-0">${icon('local_dining', 'text-secondary text-[20px] sm:text-[24px] shrink-0')}
             <span class="flex flex-col min-w-0"><span class="font-serif text-[19px] sm:text-headline-sm text-primary tracking-tight leading-none">Vebeat</span>
@@ -1051,7 +1052,7 @@ export function App() {
       title: string,
       right = `<div class="flex items-center gap-1 sm:gap-1.5 shrink-0"><a href="#/kereses" aria-label="${tr('Keresés', 'Căutare')}" class="hidden sm:flex w-9 h-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">${icon('search', 'text-[20px]')}</a>${avatarPill()}</div>`
     ) {
-      return `<header class="sticky top-0 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.03)] no-print">
+      return `<header class="sticky top-0 z-30 gpu-sticky-header bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.03)] no-print">
         <div class="max-w-6xl mx-auto h-16 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
           <div class="flex items-center gap-1 min-w-0">
             <button type="button" data-act="back" aria-label="${tr('Vissza', 'Înapoi')}" class="w-9 h-9 sm:w-10 sm:h-10 -ml-1.5 flex items-center justify-center rounded-full hover:bg-surface-container shrink-0">${icon('arrow_back')}</button>
@@ -1078,9 +1079,9 @@ export function App() {
 
     function recipeCard(r: any) {
       const free = Boolean(r.is_free || r.mine);
-      return `<article class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col group border border-outline-variant/30 hover:shadow-md transition-shadow">
+      return `<article class="perf-card bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col group border border-outline-variant/30 transition-transform duration-150 active:scale-[0.99]">
         <div class="relative w-full aspect-[4/3] overflow-hidden bg-surface-container-low">
-          <a href="#/r/${encodeURIComponent(r.id)}" tabindex="-1"><img loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${img(
+          <a href="#/r/${encodeURIComponent(r.id)}" tabindex="-1"><img loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 ease-out" src="${img(
             r.image
           )}" alt="${esc(r.title)}"></a>
           <div class="absolute top-2 left-2 right-11 flex items-center gap-1 flex-wrap pointer-events-none">${accessBadge(free, hasSub(), S.lang)}</div>
@@ -1577,7 +1578,7 @@ export function App() {
                 return `<a href="${target}" class="snap-start min-w-[144px] w-[144px] sm:min-w-[168px] sm:w-[168px] bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col flex-shrink-0 group border ${
                   on ? 'border-secondary ring-2 ring-secondary/40' : 'border-outline-variant/25'
                 }">
-            <div class="w-full h-24 sm:h-28 overflow-hidden"><img loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${img(
+            <div class="w-full h-24 sm:h-28 overflow-hidden"><img loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 ease-out" src="${img(
               s.image
             )}" alt="${esc(s.name)}"></div>
             <div class="p-2.5 flex flex-col gap-0.5"><span class="text-title-md truncate">${esc(
@@ -1841,8 +1842,12 @@ export function App() {
     function viewSubscription({ q }: { q: URLSearchParams }) {
       const signedIn = isUserSignedIn();
       const returnSlug = q.get('return') || '';
+      const curRouteKey = location.hash || '#/elofizetes';
       const qp = q.get('plan');
-      if (qp === 'yearly' || qp === 'monthly') selectedPlan = qp;
+      if (curRouteKey !== lastSubPlanRouteKey) {
+        lastSubPlanRouteKey = curRouteKey;
+        if (qp === 'yearly' || qp === 'monthly') selectedPlan = qp;
+      }
       const list = all();
       const freeCount = list.filter((r: any) => Boolean(r.is_free || r.mine)).length;
       const premiumCount = list.length - freeCount;
@@ -1885,8 +1890,8 @@ export function App() {
                 </section>`
               : `<section class="bg-surface-container-lowest rounded-2xl p-4 shadow-md border border-outline-variant/40 flex flex-col gap-4">
                   <h3 class="font-serif text-title-lg text-primary">${tr('1. Válassz csomagot (ÁFA-val)', '1. Alege planul (TVA inclus)')}</h3>
-                  <div class="grid grid-cols-2 gap-2.5">
-                    <button type="button" data-act="plan" data-plan="monthly" class="p-3.5 rounded-xl border text-left transition ${
+                  <div class="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2.5">
+                    <button type="button" data-act="plan" data-plan="monthly" aria-pressed="${selectedPlan === 'monthly'}" class="min-h-[84px] p-3.5 sm:p-4 rounded-xl border text-left transition-transform duration-150 active:scale-[0.98] ${
                       selectedPlan === 'monthly'
                         ? 'border-secondary bg-secondary-fixed/40 ring-2 ring-secondary/40'
                         : 'border-outline-variant/50 bg-surface-container-low'
@@ -1895,7 +1900,7 @@ export function App() {
                       <span class="block font-serif text-title-lg text-primary mt-0.5">${esc(PLANS[S.lang].monthly.priceLabel)}</span>
                       <span class="block text-[11px] text-on-surface-variant mt-1">${tr('Bármikor lemondható', 'Anulare oricând')}</span>
                     </button>
-                    <button type="button" data-act="plan" data-plan="yearly" class="p-3.5 rounded-xl border text-left transition ${
+                    <button type="button" data-act="plan" data-plan="yearly" aria-pressed="${selectedPlan === 'yearly'}" class="min-h-[84px] p-3.5 sm:p-4 rounded-xl border text-left transition-transform duration-150 active:scale-[0.98] ${
                       selectedPlan === 'yearly'
                         ? 'border-secondary bg-secondary-fixed/40 ring-2 ring-secondary/40'
                         : 'border-outline-variant/50 bg-surface-container-low'
@@ -2400,7 +2405,7 @@ export function App() {
         checked = S.checked[r.id] || [];
       const stepTip = s.tip ? { lead: '', bold: '', rest: s.tip } : last ? r.tip : null;
       const stepImg = s.image || (last ? r.image : '');
-      return `<header class="sticky top-0 z-30 bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-3 pb-3">
+      return `<header class="sticky top-0 z-30 gpu-sticky-header bg-surface/95 backdrop-blur-md border-b border-outline-variant/25 shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-3 pb-3">
           <div class="max-w-4xl mx-auto px-3.5 sm:px-6">
             <div class="flex items-center justify-between gap-2">
               <a href="#/r/${encodeURIComponent(
@@ -3575,6 +3580,14 @@ export function App() {
       print: () => window.print(),
       plan: el => {
         selectedPlan = el.dataset.plan === 'yearly' ? 'yearly' : 'monthly';
+        const rt = route();
+        if (rt.p[0] === 'elofizetes') {
+          const nextQ = new URLSearchParams(rt.q);
+          nextQ.set('plan', selectedPlan);
+          const nextHash = `#/elofizetes?${nextQ.toString()}`;
+          lastSubPlanRouteKey = nextHash;
+          history.replaceState(null, '', nextHash);
+        }
         render(true);
       },
       subscribe: el => {
