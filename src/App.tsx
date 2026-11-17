@@ -972,7 +972,7 @@ export function App() {
         <div class="max-w-6xl mx-auto h-16 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
           <div class="flex items-center gap-1 min-w-0">
             <button type="button" data-act="back" aria-label="${tr('Vissza', 'Înapoi')}" class="w-9 h-9 sm:w-10 sm:h-10 -ml-1.5 flex items-center justify-center rounded-full hover:bg-surface-container shrink-0">${icon('arrow_back')}</button>
-            <h1 class="font-serif text-[18px] sm:text-title-lg text-primary truncate">${esc(title)}</h1>
+            <h1 class="font-serif text-[16px] sm:text-title-lg text-primary truncate">${esc(title)}</h1>
           </div>${right}</div></header>`;
     }
 
@@ -1084,16 +1084,16 @@ export function App() {
             )}</button>
               </div>
               <div class="h-1.5 rounded-full bg-primary-container overflow-hidden"><div class="h-full bg-secondary-container rounded-full" style="width:${pct}%"></div></div>
-              <div class="flex gap-2">
+              <div class="flex flex-col min-[380px]:flex-row gap-2">
                 <a href="#/fozes/${encodeURIComponent(
                   r.id
-                )}/${step}" class="flex-1 h-10 rounded-lg bg-secondary text-on-secondary text-label-md flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition">${icon(
+                )}/${step}" class="flex-1 min-h-[42px] px-3.5 py-2 rounded-lg bg-secondary text-on-secondary text-[12px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug shadow-sm active:scale-[0.99] transition">${icon(
               'play_arrow',
-              'fill text-[18px]'
-            )}${tr(`Főzés folytatása (${step}/${total}. lépés)`, `Continuă gătitul (pasul ${step}/${total})`)}</a>
+              'fill text-[18px] shrink-0'
+            )}<span>${tr(`Főzés folytatása (${step}/${total}. lépés)`, `Continuă gătitul (pasul ${step}/${total})`)}</span></a>
                 <a href="#/r/${encodeURIComponent(
                   r.id
-                )}" class="h-10 px-3 rounded-lg bg-primary-container text-on-primary text-label-md flex items-center justify-center">${tr('Recept', 'Rețetă')}</a>
+                )}" class="min-h-[42px] px-3.5 py-2 rounded-lg bg-primary-container text-on-primary text-[12px] sm:text-label-md font-semibold flex items-center justify-center shrink-0">${tr('Recept', 'Rețetă')}</a>
               </div>
             </div>`;
           })
@@ -1717,8 +1717,8 @@ export function App() {
 
               <button type="button" data-act="subscribe" data-slug="${esc(
                 r.id
-              )}" class="w-full h-12 rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-md hover:opacity-95 active:scale-95 transition">
-                ${icon('lock_open', 'text-[20px]')}
+              )}" class="w-full min-h-[50px] px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-2 text-center leading-snug shadow-md hover:opacity-95 active:scale-[0.98] transition">
+                ${icon('lock_open', 'text-[20px] shrink-0')}
                 <span>${
                   signedIn
                     ? tr('Előfizetés indítása (Stripe Checkout)', 'Pornește abonamentul (Stripe Checkout)')
@@ -1795,11 +1795,11 @@ export function App() {
             hasSub()
               ? `<section class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-outline-variant/40 flex flex-col gap-3">
                   <p class="text-title-md text-primary">${tr('Már rendelkezel aktív Vebeat Prémium előfizetéssel.', 'Ai deja un abonament Vebeat Premium activ.')}</p>
-                  <div class="flex flex-wrap gap-2">
-                    <button type="button" data-act="portal" class="flex-1 h-11 px-4 rounded-xl bg-primary text-on-primary text-title-md flex items-center justify-center gap-2">${icon('manage_accounts', 'text-[20px]')}${tr('Előfizetés kezelése (Stripe)', 'Gestionează abonamentul (Stripe)')}</button>
+                  <div class="flex flex-col sm:flex-row gap-2.5">
+                    <button type="button" data-act="portal" class="w-full sm:flex-1 min-h-[46px] px-4 py-2.5 rounded-xl bg-primary text-on-primary text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-2 text-center leading-snug">${icon('manage_accounts', 'text-[20px] shrink-0')}<span>${tr('Előfizetés kezelése (Stripe)', 'Gestionează abonamentul (Stripe)')}</span></button>
                     ${
                       returnSlug && returnSlug !== 'elofizetes'
-                        ? `<a href="#/r/${encodeURIComponent(returnSlug)}" class="h-11 px-4 rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center">${tr('Vissza a recepthez', 'Înapoi la rețetă')}</a>`
+                        ? `<a href="#/r/${encodeURIComponent(returnSlug)}" class="w-full sm:w-auto min-h-[46px] px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-[14px] sm:text-title-md font-semibold flex items-center justify-center shrink-0">${tr('Vissza a recepthez', 'Înapoi la rețetă')}</a>`
                         : ''
                     }
                   </div>
@@ -1852,8 +1852,8 @@ export function App() {
 
                   <button type="button" data-act="subscribe" data-slug="${esc(
                     returnSlug || 'elofizetes'
-                  )}" class="w-full h-12 rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-md hover:opacity-95 active:scale-95 transition">
-                    ${icon('lock_open', 'text-[20px]')}
+                  )}" class="w-full min-h-[50px] px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-2 text-center leading-snug shadow-md hover:opacity-95 active:scale-[0.98] transition">
+                    ${icon('lock_open', 'text-[20px] shrink-0')}
                     <span>${
                       signedIn
                         ? tr('Tovább a biztonságos fizetéshez (Stripe)', 'Continuă la plata securizată (Stripe)')
@@ -2557,16 +2557,16 @@ export function App() {
               ? ''
               : `<button data-act="fav" data-id="${esc(
                   r.id
-                )}" class="h-12 rounded-lg bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2">${icon(
+                )}" class="min-h-[48px] px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-2 text-center leading-snug">${icon(
                   'favorite',
-                  'text-[20px]'
-                )}${tr('Mentés a kedvencek közé', 'Salvează la favorite')}</button>`
+                  'text-[20px] shrink-0'
+                )}<span>${tr('Mentés a kedvencek közé', 'Salvează la favorite')}</span></button>`
           }
           <a href="#/r/${encodeURIComponent(
             r.id
-          )}" data-replace class="h-12 rounded-lg bg-surface-container text-primary text-title-md flex items-center justify-center">${tr('Vissza a recepthez', 'Înapoi la rețetă')}</a>
-          <a href="#/profil?t=fozott" data-replace class="h-11 rounded-lg bg-surface-container-low text-primary text-label-md flex items-center justify-center hover:bg-surface-container">${tr('Megtekintés a Nemrég főzötteknél →', 'Vezi în Gătite recent →')}</a>
-          <a href="#/" data-replace class="h-12 rounded-lg text-secondary text-title-md flex items-center justify-center">${tr('Új recept felfedezése', 'Descoperă o rețetă nouă')}</a>
+          )}" data-replace class="min-h-[48px] px-4 py-2.5 rounded-xl bg-surface-container text-primary text-[14px] sm:text-title-md font-semibold flex items-center justify-center text-center leading-snug">${tr('Vissza a recepthez', 'Înapoi la rețetă')}</a>
+          <a href="#/profil?t=fozott" data-replace class="min-h-[44px] px-4 py-2.5 rounded-xl bg-surface-container-low text-primary text-[13px] sm:text-label-md font-semibold flex items-center justify-center text-center leading-snug hover:bg-surface-container">${tr('Megtekintés a Nemrég főzötteknél', 'Vezi în Gătite recent')}</a>
+          <a href="#/" data-replace class="min-h-[48px] px-4 py-2.5 rounded-xl text-secondary text-[14px] sm:text-title-md font-semibold flex items-center justify-center text-center leading-snug">${tr('Új recept felfedezése', 'Descoperă o rețetă nouă')}</a>
         </div></div>`;
     }
 
@@ -2713,15 +2713,15 @@ export function App() {
                 )}</span></li>`
               )
               .join('')}</ul>
-            <div class="grid grid-cols-2 gap-2 mt-3">
-              <button data-act="shopcopy" class="h-10 rounded-lg bg-surface-container text-label-md flex items-center justify-center gap-1">${icon(
+            <div class="grid grid-cols-1 min-[340px]:grid-cols-2 gap-2 mt-3">
+              <button data-act="shopcopy" class="min-h-[42px] px-3 py-2 rounded-xl bg-surface-container text-[13px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug">${icon(
                 'content_copy',
-                'text-[16px]'
-              )}${tr('Másolás', 'Copiază')}</button>
-              <button data-act="shopclear" class="h-10 rounded-lg bg-error-container text-on-error-container text-label-md flex items-center justify-center gap-1">${icon(
+                'text-[16px] shrink-0'
+              )}<span>${tr('Másolás', 'Copiază')}</span></button>
+              <button data-act="shopclear" class="min-h-[42px] px-3 py-2 rounded-xl bg-error-container text-on-error-container text-[13px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug">${icon(
                 'delete_sweep',
-                'text-[16px]'
-              )}${tr('Lista törlése', 'Șterge lista')}</button>
+                'text-[16px] shrink-0'
+              )}<span>${tr('Lista törlése', 'Șterge lista')}</span></button>
             </div></div>`
             : empty(
                 tr('A bevásárlólista üres. A receptoldalon a „Hozzávalók a bevásárlólistához” gombbal tölthetsz fel.', 'Lista de cumpărături este goală. Adaugă ingrediente din pagina unei rețete.'),
@@ -2759,7 +2759,7 @@ export function App() {
           </div>
           ${
             signedIn
-              ? `<h2 class="font-serif text-headline-md text-primary mt-1">${esc(uName || tr('Vebeat Fiók', 'Cont Vebeat'))}</h2>
+              ? `<h2 class="font-serif text-[22px] sm:text-headline-md text-primary mt-1 break-words max-w-full">${esc(uName || tr('Vebeat Fiók', 'Cont Vebeat'))}</h2>
                  <p class="text-body-md text-on-surface-variant">${esc(
                    S.user?.bio || tr('Lelkes házi séf & Receptalkotó', 'Bucătar pasionat & Creator de rețete')
                  )}</p>
@@ -2824,11 +2824,11 @@ export function App() {
             ? 'bg-primary text-on-primary border-secondary/40'
             : 'bg-surface-container-lowest text-on-surface border-outline-variant/40'
         } flex flex-col gap-3">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="flex items-center gap-1.5 text-label-sm uppercase tracking-wider ${
               hasSub() ? 'text-secondary-fixed' : 'text-secondary'
-            }">${icon('workspace_premium', 'fill text-[18px]')}${tr('Előfizetés & Tagság (Stripe)', 'Abonament & Membru (Stripe)')}</span>
-            <span class="px-2.5 py-0.5 rounded-full text-label-sm ${
+            }">${icon('workspace_premium', 'fill text-[18px] shrink-0')}<span>${tr('Előfizetés & Tagság (Stripe)', 'Abonament & Membru (Stripe)')}</span></span>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase whitespace-nowrap shrink-0 ${
               hasSub()
                 ? 'bg-secondary text-on-secondary'
                 : 'bg-surface-container-high text-primary'
@@ -2872,21 +2872,21 @@ export function App() {
               )
         }</p>
           </div>
-          <div class="flex flex-wrap gap-2 pt-1">
+          <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
             ${
               hasSub()
-                ? `<button type="button" data-act="portal" class="flex-1 h-11 px-4 rounded-xl bg-surface-container-lowest text-primary text-title-md flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition">${icon(
+                ? `<button type="button" data-act="portal" class="w-full sm:flex-1 min-h-[46px] px-4 py-2.5 rounded-xl bg-surface-container-lowest text-primary text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-2 text-center leading-snug shadow-sm active:scale-[0.98] transition">${icon(
                     'manage_accounts',
-                    'text-[20px] text-secondary'
-                  )}${tr('Előfizetés kezelése (Stripe Portal)', 'Gestionează abonamentul (Stripe Portal)')}</button>
-                   <button type="button" data-act="portal-cancel" class="h-11 px-3.5 rounded-xl bg-primary-container text-on-primary-container hover:text-on-primary text-label-md flex items-center justify-center gap-1">${tr('Lemondás', 'Anulare')}</button>`
-                : `<a href="#/elofizetes" class="flex-1 h-11 px-4 rounded-xl bg-secondary text-on-secondary text-title-md flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">${icon(
+                    'text-[20px] text-secondary shrink-0'
+                  )}<span>${tr('Előfizetés kezelése (Stripe)', 'Gestionează abonamentul (Stripe)')}</span></button>
+                   <button type="button" data-act="portal-cancel" class="w-full sm:w-auto min-h-[46px] px-4 py-2.5 rounded-xl bg-primary-container text-on-primary-container hover:text-on-primary text-[13px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 active:scale-[0.98] transition">${tr('Lemondás', 'Anulare')}</button>`
+                : `<a href="#/elofizetes" class="w-full min-h-[48px] px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-2 text-center leading-snug shadow-sm active:scale-[0.98] transition">${icon(
                     'workspace_premium',
-                    'fill text-[20px]'
-                  )}${tr(
+                    'fill text-[20px] shrink-0'
+                  )}<span>${tr(
                     `Prémium előfizetés (${PLANS.hu.monthly.shortLabel})`,
                     `Abonament Premium (${PLANS.ro.monthly.shortLabel})`
-                  )}</a>`
+                  )}</span></a>`
             }
           </div>
         </section>
@@ -3249,11 +3249,12 @@ export function App() {
           </select>`
         )}
         <p id="formerr" role="alert" class="text-body-sm text-error min-h-[20px]"></p>
-        <div class="flex gap-2.5">
-          <button type="button" data-act="back" class="h-14 px-5 rounded-xl bg-surface-container text-primary text-title-md hover:bg-surface-container-high">${tr('Mégse', 'Anulează')}</button>
-          <button class="flex-1 h-14 rounded-xl bg-secondary text-on-secondary text-title-lg flex items-center justify-center gap-2 shadow-md">${icon(
-            'save'
-          )}${r ? tr('Változtatások mentése', 'Salvează modificările') : tr('Recept mentése', 'Salvează rețeta')}</button>
+        <div class="flex flex-col-reverse sm:flex-row gap-2.5">
+          <button type="button" data-act="back" class="w-full sm:w-auto min-h-[50px] px-5 py-2.5 rounded-xl bg-surface-container text-primary text-[15px] sm:text-title-md font-semibold hover:bg-surface-container-high active:scale-[0.98] transition">${tr('Mégse', 'Anulează')}</button>
+          <button class="w-full sm:flex-1 min-h-[52px] px-4 py-2.5 rounded-xl bg-secondary text-on-secondary text-[15px] sm:text-title-lg font-semibold flex items-center justify-center gap-2 text-center leading-snug shadow-md active:scale-[0.98] transition">${icon(
+            'save',
+            'shrink-0'
+          )}<span>${r ? tr('Változtatások mentése', 'Salvează modificările') : tr('Recept mentése', 'Salvează rețeta')}</span></button>
         </div>
       </form>`
       );
@@ -3900,10 +3901,10 @@ export function App() {
             `Vebeat ${refId}`
           )}&body=${encodeURIComponent(
             bodyText
-          )}" class="h-10 rounded-lg bg-secondary text-on-secondary text-label-md flex items-center justify-center gap-1.5 shadow-sm">${icon(
+          )}" class="min-h-[44px] px-4 py-2.5 rounded-lg bg-secondary text-on-secondary text-[13px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug shadow-sm">${icon(
             'send',
-            'text-[16px]'
-          )}${tr('Küldés e-mailben (contact@vebeat.ro)', 'Trimite pe e-mail (contact@vebeat.ro)')}</a>`;
+            'text-[16px] shrink-0'
+          )}<span>${tr('Küldés e-mailben (contact@vebeat.ro)', 'Trimite pe e-mail (contact@vebeat.ro)')}</span></a>`;
         }
         toast(tr(`Nyilatkozat elkészült: ${refId}`, `Declarație pregătită: ${refId}`));
       }

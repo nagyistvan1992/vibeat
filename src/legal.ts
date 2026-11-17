@@ -332,13 +332,13 @@ export function viewLegalContent(
             'Ai dreptul de acces, rectificare, ștergere („dreptul de a fi uitat”), restricționare, portabilitate a datelor și opoziție (art. 15–22 GDPR).'
           )}</p>
           <div class="grid grid-cols-1 gap-2 pt-1">
-            <button type="button" data-act="export" class="h-10 px-3 rounded-lg bg-primary text-on-primary text-label-md flex items-center justify-center gap-1.5">
-              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">download</span>
-              ${tr('Saját adatok letöltése (GDPR JSON export)', 'Descarcă datele mele (Export portabilitate GDPR JSON)')}
+            <button type="button" data-act="export" class="w-full min-h-[44px] px-3.5 py-2.5 rounded-lg bg-primary text-on-primary text-[13px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug">
+              <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">download</span>
+              <span>${tr('Saját adatok letöltése (GDPR JSON export)', 'Descarcă datele mele (Export portabilitate GDPR JSON)')}</span>
             </button>
-            <button type="button" data-act="gdpr-delete-local" class="h-10 px-3 rounded-lg bg-error-container text-on-error-container text-label-md flex items-center justify-center gap-1.5">
-              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">delete_forever</span>
-              ${tr('Helyi adatok törlése erről az eszközről', 'Șterge toate datele locale de pe acest dispozitiv')}
+            <button type="button" data-act="gdpr-delete-local" class="w-full min-h-[44px] px-3.5 py-2.5 rounded-lg bg-error-container text-on-error-container text-[13px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug">
+              <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">delete_forever</span>
+              <span>${tr('Helyi adatok törlése erről az eszközről', 'Șterge toate datele locale de pe acest dispozitiv')}</span>
             </button>
           </div>
           <p class="text-[12px] pt-1">${tr(
@@ -383,12 +383,12 @@ export function viewLegalContent(
               'se activează exclusiv cu acordul tău prealabil pentru îmbunătățirea experienței culinare.'
             )}</li>
           </ul>
-          <div class="grid grid-cols-2 gap-2 pt-2">
-            <button type="button" data-act="cookieEssential" class="h-10 px-3 rounded-xl bg-surface-container text-primary text-label-md hover:bg-surface-container-high">${tr(
+          <div class="grid grid-cols-1 min-[360px]:grid-cols-2 gap-2 pt-2">
+            <button type="button" data-act="cookieEssential" class="min-h-[42px] px-3 py-2 rounded-xl bg-surface-container text-primary text-[13px] sm:text-label-md font-semibold hover:bg-surface-container-high">${tr(
               'Csak szükségesek',
               'Doar esențiale'
             )}</button>
-            <button type="button" data-act="cookieAll" class="h-10 px-3 rounded-xl bg-secondary text-on-secondary text-label-md shadow-sm">${tr(
+            <button type="button" data-act="cookieAll" class="min-h-[42px] px-3 py-2 rounded-xl bg-secondary text-on-secondary text-[13px] sm:text-label-md font-semibold shadow-sm">${tr(
               'Összes elfogadása',
               'Acceptă toate'
             )}</button>
@@ -412,9 +412,9 @@ export function viewLegalContent(
           )}</p>
           ${
             opts.hasSub
-              ? `<button type="button" data-act="portal-cancel" class="h-11 px-4 rounded-xl bg-error text-on-error text-title-md flex items-center justify-center gap-1.5 shadow-sm">
-                  <span class="material-symbols-outlined text-[20px]" aria-hidden="true">cancel</span>
-                  ${tr('Előfizetés azonnali lemondása (Stripe Portal)', 'Anulează abonamentul acum (Stripe Portal)')}
+              ? `<button type="button" data-act="portal-cancel" class="w-full sm:w-auto min-h-[46px] px-4 py-2.5 rounded-xl bg-error text-on-error text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug shadow-sm">
+                  <span class="material-symbols-outlined text-[20px] shrink-0" aria-hidden="true">cancel</span>
+                  <span>${tr('Előfizetés azonnali lemondása (Stripe Portal)', 'Anulează abonamentul acum (Stripe Portal)')}</span>
                 </button>`
               : `<p class="text-[12px] bg-surface-container-low rounded-lg p-3">${tr(
                   'Jelenleg nincs aktív fizetős előfizetésed.',
@@ -461,9 +461,9 @@ export function viewLegalContent(
               <textarea name="reason" rows="2" maxlength="400" class="w-full p-3 rounded-lg bg-surface-container-low border border-outline-variant/40"></textarea>
             </label>
             <p id="withdraw-err" role="alert" class="text-body-sm text-error"></p>
-            <button class="h-11 rounded-xl bg-primary text-on-primary text-title-md flex items-center justify-center gap-2 shadow-sm">
-              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">description</span>
-              ${tr('Nyilatkozat elkészítése & Küldése', 'Generează & Pregătește declarația')}
+            <button class="w-full min-h-[46px] px-4 py-2.5 rounded-xl bg-primary text-on-primary text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-2 text-center leading-snug shadow-sm">
+              <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">description</span>
+              <span>${tr('Nyilatkozat elkészítése & Küldése', 'Generează & Pregătește declarația')}</span>
             </button>
           </form>
           <div id="withdraw-result" class="hidden rounded-xl bg-surface-container-low border border-secondary/30 p-3 flex-col gap-2"></div>
