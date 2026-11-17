@@ -1209,7 +1209,7 @@ export function App() {
         .sort((a, b) => (b.mine ? 9 : b.rating || 0) - (a.mine ? 9 : a.rating || 0))
         .slice(0, 8);
       const userLoggedIn = isUserSignedIn();
-      const heroCtaHref = userLoggedIn ? '#/elofizetes' : '#/elofizetes?plan=yearly';
+      const heroCtaHref = '#/elofizetes?plan=yearly';
 
       const topConversionHero = subActive
         ? `<section class="rounded-2xl bg-primary text-on-primary p-4 sm:p-5 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-secondary/30">
@@ -1224,56 +1224,58 @@ export function App() {
               </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
-              <a href="#/kereses?f=Prémium" class="min-h-[42px] px-4 rounded-xl bg-secondary text-on-secondary text-label-lg font-semibold flex items-center gap-1.5 shadow-sm hover:opacity-95 transition">${icon('menu_book', 'text-[18px]')}${tr('Prémium receptek', 'Rețete Premium')}</a>
-              <button type="button" data-act="portal" class="min-h-[42px] px-3.5 rounded-xl bg-surface-container-lowest/15 hover:bg-surface-container-lowest/25 text-on-primary text-label-lg flex items-center gap-1.5 transition">${icon('credit_card', 'text-[18px]')}${tr('Fiók kezelése', 'Gestionează')}</button>
+              <a href="#/kereses?f=Prémium" class="min-h-[42px] px-4 rounded-full bg-[#fcf9f3] text-[#132a1f] text-label-lg font-semibold flex items-center gap-1.5 shadow-sm hover:opacity-95 transition">${icon('menu_book', 'text-[18px] text-secondary')}${tr('Prémium receptek', 'Rețete Premium')}</a>
+              <button type="button" data-act="portal" class="min-h-[42px] px-3.5 rounded-full border border-white/25 bg-white/10 hover:bg-white/20 text-on-primary text-label-lg flex items-center gap-1.5 transition">${icon('credit_card', 'text-[18px]')}${tr('Fiók kezelése', 'Gestionează')}</button>
             </div>
           </section>`
-        : `<section aria-label="${tr('Vebeat Prémium bemutató', 'Prezentare Vebeat Premium')}" class="relative rounded-2xl bg-primary text-on-primary p-5 sm:p-7 overflow-hidden shadow-lg border border-secondary/30">
-            <div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-secondary/20 blur-2xl pointer-events-none"></div>
-            <div class="absolute -left-10 -bottom-12 w-40 h-40 rounded-full bg-primary-container/40 blur-xl pointer-events-none"></div>
-            <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 sm:gap-6">
-              <div class="flex flex-col gap-3 max-w-2xl min-w-0">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-on-secondary text-[11px] font-bold uppercase tracking-wider shadow-sm">${icon('workspace_premium', 'fill text-[14px]')}${tr('Vebeat Prémium Fiók', 'Cont Vebeat Premium')}</span>
-                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-lowest/15 text-secondary-fixed text-[11px] font-semibold">${icon('verified', 'text-[14px]')}${tr(`${list.length} ellenőrzött recept`, `${list.length} rețete verificate`)}</span>
-                </div>
-                <h2 class="font-serif text-[26px] sm:text-[34px] leading-[1.15] tracking-tight">${tr(
-                  `Főzz tudatosan és gyorsabban — nyisd fel mind a ${premiumCount} prémium receptet!`,
-                  `Gătește rapid și echilibrat — deblochează toate cele ${premiumCount} rețete premium!`
-                )}</h2>
-                <p class="text-body-sm sm:text-body-md text-surface-variant/95 leading-relaxed">${tr(
-                  'Grammra pontos adagszámítás, lépésenkénti időzítő Főzési Mód, tápérték-elemzés és egykattintásos bevásárlólista — magyar és román nyelven.',
-                  'Cantități calculate exact la gram, Mod de Gătit pas cu pas cu cronometru, valori nutriționale și listă de cumpărături — în română și maghiară.'
-                )}</p>
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-secondary-fixed/95 pt-0.5">
-                  <span class="inline-flex items-center gap-1">${icon('check_circle', 'fill text-[15px] text-secondary-fixed')}${tr('Lépésenkénti főzőmód', 'Mod de Gătit interactiv')}</span>
-                  <span class="inline-flex items-center gap-1">${icon('check_circle', 'fill text-[15px] text-secondary-fixed')}${tr('Pontos kalória & makrók', 'Calorii & macronutrienți exacți')}</span>
-                  <span class="inline-flex items-center gap-1">${icon('check_circle', 'fill text-[15px] text-secondary-fixed')}${tr('Bármikor lemondható', 'Anulare oricând')}</span>
-                </div>
+        : `<section aria-label="${tr('Vebeat Prémium bemutató', 'Prezentare Vebeat Premium')}" class="relative rounded-[24px] overflow-hidden bg-[#132a1f] text-[#fcf9f3] shadow-xl border border-outline-variant/20">
+            <!-- Mobile-first full-bleed dish photograph -->
+            <div class="relative h-56 sm:h-64 md:hidden overflow-hidden">
+              <img src="/assets/hero-vebeat-editorial.jpg" fetchpriority="high" alt="${tr('Vebeat séf-vacsora – ropogós lazac arany sáfrányos rizottóval', 'Cină Vebeat de chef – somon crocant cu risotto auriu')}" class="w-full h-full object-cover object-center">
+              <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(180deg, rgba(19,42,31,0.12) 0%, rgba(19,42,31,0.28) 55%, #132a1f 100%)"></div>
+              <div class="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#132a1f]/75 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-[#fcf9f3]">
+                ${icon('star', 'fill text-[13px] text-[#f4b860]')}
+                <span>4.9/5 • ${tr(`${list.length} séf-recept`, `${list.length} rețete de chef`)}</span>
               </div>
-              <div class="flex flex-col gap-2.5 lg:w-[320px] shrink-0 bg-surface-container-lowest/10 backdrop-blur-sm rounded-2xl p-4 border border-surface-container-lowest/15">
-                <div class="flex items-baseline justify-between gap-2">
-                  <span class="text-label-sm uppercase tracking-wider text-secondary-fixed">${tr('Prémium tagság', 'Abonament Premium')}</span>
-                  <span class="px-2 py-0.5 rounded-full bg-secondary text-on-secondary text-[10px] font-bold">${tr('-33% ÉVES', '-33% ANUAL')}</span>
-                </div>
-                <div class="flex items-baseline gap-2 flex-wrap">
-                  <span class="font-serif text-[26px] leading-none text-on-primary">${esc(PLANS[S.lang].monthly.priceLabel)}</span>
-                  <span class="text-[12px] text-surface-variant">${tr('vagy', 'sau')} ${esc(PLANS[S.lang].yearly.shortLabel)}</span>
-                </div>
-                <a href="${heroCtaHref}" data-cta="hero-premium" class="w-full min-h-[48px] px-4 rounded-xl bg-secondary text-on-secondary text-title-md font-semibold flex items-center justify-center gap-2 shadow-md hover:bg-secondary/90 active:scale-[0.99] transition">
-                  ${icon('workspace_premium', 'fill text-[20px]')}
-                  <span>${tr('Prémium fiók aktiválása', 'Activează contul Premium')}</span>
+            </div>
+            <!-- Desktop/tablet editorial background photograph with directional walnut-forest scrim -->
+            <img src="/assets/hero-vebeat-editorial.jpg" fetchpriority="high" alt="${tr('Vebeat séf-vacsora – ropogós lazac arany sáfrányos rizottóval', 'Cină Vebeat de chef – somon crocant cu risotto auriu')}" class="hidden md:block absolute inset-0 w-full h-full object-cover object-right">
+            <div class="hidden md:block absolute inset-0 pointer-events-none" style="background: linear-gradient(90deg, #132a1f 0%, rgba(19,42,31,0.93) 42%, rgba(19,42,31,0.48) 66%, rgba(19,42,31,0.06) 100%)"></div>
+
+            <div class="relative z-10 px-5 pb-6 pt-1 sm:px-7 sm:pb-7 md:p-9 lg:p-10 md:max-w-[58%] lg:max-w-[54%] flex flex-col gap-3.5 sm:gap-4">
+              <div class="hidden md:inline-flex self-start items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[11px] font-semibold tracking-wider uppercase text-[#ffdad0]">
+                ${icon('star', 'fill text-[14px] text-[#f4b860]')}
+                <span>4.9/5 • ${tr(`${list.length} ellenőrzött séf-recept`, `${list.length} rețete verificate de chef`)}</span>
+              </div>
+              <h2 class="font-serif text-[27px] sm:text-[34px] lg:text-[40px] leading-[1.1] tracking-tight text-[#fcf9f3]">${tr(
+                'Éttermi vacsorák húsz perc alatt. Találgatás nélkül.',
+                'Cine ca la restaurant în 20 de minute. Fără improvizații.'
+              )}</h2>
+              <p class="text-body-sm sm:text-body-md text-[#e8e3d9] leading-relaxed max-w-xl">${tr(
+                'Grammra pontos adagok, illatos szezonális fogások és lépésről lépésre vezető főzőmód — hogy minden este biztos siker legyen.',
+                'Cantități calibrate la gram, arome de sezon și Modul Interactiv de Gătit pas cu pas — ca fiecare seară în bucătărie să fie o reușită.'
+              )}</p>
+              <div class="flex flex-wrap items-center gap-2.5 pt-1">
+                <a href="${heroCtaHref}" data-cta="hero-premium" class="min-h-[48px] px-5 sm:px-6 rounded-full bg-[#fcf9f3] hover:bg-[#ffdad0] text-[#132a1f] text-[14px] sm:text-title-md font-semibold inline-flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition">
+                  ${icon('workspace_premium', 'fill text-[19px] text-secondary')}
+                  <span>${tr('Prémium séftár megnyitása', 'Deschide colecția Premium')}</span>
                   ${icon('arrow_forward', 'text-[18px]')}
                 </a>
-                <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5 text-[12px]">
-                  <a href="#/kereses?f=Ingyenes" class="text-secondary-fixed hover:underline font-medium inline-flex items-center gap-1">${tr(`${freeCount} ingyenes recept`, `${freeCount} rețete gratuite`)}${icon('chevron_right', 'text-[15px]')}</a>
-                  ${
-                    userLoggedIn
-                      ? ''
-                      : `<a href="#/belepes" class="text-surface-variant hover:text-on-primary underline">${tr('Belépés', 'Autentificare')}</a>`
-                  }
-                </div>
+                <a href="#/kereses?f=Ingyenes" class="min-h-[48px] px-4 sm:px-5 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 text-[#fcf9f3] text-[13px] sm:text-label-lg font-medium inline-flex items-center justify-center gap-1.5 backdrop-blur-sm transition">
+                  <span>${tr(`Ingyenes kóstoló (${freeCount})`, `Rețete gratuite (${freeCount})`)}</span>
+                </a>
               </div>
+              <p class="text-[11px] sm:text-[12px] text-[#d6d0c4] flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span>${tr(
+                  `Azonnali hozzáférés mind a ${premiumCount} exkluzív recepthez • Bármikor lemondható`,
+                  `Acces instant la toate cele ${premiumCount} rețete exclusive • Poți anula oricând`
+                )}</span>
+                ${
+                  userLoggedIn
+                    ? ''
+                    : `<a href="#/belepes" class="text-[#ffdad0] hover:underline font-medium">${tr('Már tag vagy? Belépés', 'Ai deja cont? Autentificare')}</a>`
+                }
+              </p>
             </div>
           </section>`;
 
