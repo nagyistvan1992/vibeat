@@ -503,7 +503,7 @@ export function App() {
           : `${r.title} (${servingsOf(r)} ${srvWord()})`;
       const lines = (r.ingredients || []).map((ing: any, i: number) => {
         const done = checked.includes(i);
-        const box = mode === 'md' ? (done ? '- [x]' : '- [ ]') : done ? '☑' : '☐';
+        const box = done ? '[x]' : '[ ]';
         const qty = ing.qty == null ? `(${ing.unit})` : amountText(ing, r);
         return `${box} ${ing.qty == null ? `${ing.name} ${qty}` : `${qty} ${ing.name}`}`.trim();
       });
@@ -545,7 +545,7 @@ export function App() {
           delete S.timers[key];
           save();
           ding();
-          toast(tr('⏰ Lejárt az időzítő!', '⏰ Cronometrul a expirat!'));
+          toast(tr('Lejárt az időzítő!', 'Cronometrul a expirat!'));
         }
         paintTimers();
       }, 1000);
@@ -800,7 +800,7 @@ export function App() {
         await syncMeAndRecipes();
         if (data.url) {
           if (data.mode === 'dev_simulated_checkout') {
-            toast(tr('🎉 Vebeat Prémium előfizetés aktiválva!', '🎉 Abonamentul Vebeat Premium a fost activat!'));
+            toast(tr('Vebeat Prémium előfizetés aktiválva!', 'Abonamentul Vebeat Premium a fost activat!'));
             const hashIdx = data.url.indexOf('#/');
             if (hashIdx !== -1) {
               goReplace(data.url.slice(hashIdx));
@@ -919,47 +919,91 @@ export function App() {
 
     function viewLanguageGate() {
       const busy = Boolean(langLoading);
-      return `<section id="lang-gate" aria-label="Válassz nyelvet / Alege limba" class="min-h-[100dvh] px-4 py-10 flex flex-col items-center justify-center gap-6 bg-surface">
-        <div class="w-full max-w-md bg-surface-container-lowest rounded-[28px] p-5 sm:p-6 shadow-xl border border-outline-variant/30 flex flex-col gap-6">
-          <div class="flex flex-col items-center text-center gap-2.5">
-            <span class="w-14 h-14 rounded-2xl bg-secondary-fixed/70 flex items-center justify-center text-secondary shadow-sm">${icon('local_dining', 'text-[30px]')}</span>
-            <div class="flex flex-col items-center">
-              <span class="font-serif text-headline-md text-primary tracking-tight leading-none">Vebeat</span>
-              <span class="text-label-sm tracking-wide text-on-surface-variant mt-1">Fuel your daily vibe.</span>
+      const huCrestSvg = `<svg viewBox="0 0 36 36" class="w-10 h-10 rounded-full shrink-0 shadow-sm ring-1 ring-black/10" aria-hidden="true">
+        <clipPath id="vg-hu"><circle cx="18" cy="18" r="18"/></clipPath>
+        <g clip-path="url(#vg-hu)">
+          <rect x="0" y="0" width="36" height="12" fill="#b33d2e"/>
+          <rect x="0" y="12" width="36" height="12" fill="#fcf9f3"/>
+          <rect x="0" y="24" width="36" height="12" fill="#234d36"/>
+        </g>
+      </svg>`;
+      const roCrestSvg = `<svg viewBox="0 0 36 36" class="w-10 h-10 rounded-full shrink-0 shadow-sm ring-1 ring-black/10" aria-hidden="true">
+        <clipPath id="vg-ro"><circle cx="18" cy="18" r="18"/></clipPath>
+        <g clip-path="url(#vg-ro)">
+          <rect x="0" y="0" width="12" height="36" fill="#1d3c6e"/>
+          <rect x="12" y="0" width="12" height="36" fill="#eab342"/>
+          <rect x="24" y="0" width="12" height="36" fill="#b33d2e"/>
+        </g>
+      </svg>`;
+      const brandCrestSvg = `<svg viewBox="0 0 40 40" fill="none" class="w-8 h-8 text-[#fcf9f3]" aria-hidden="true">
+        <circle cx="20" cy="20" r="18.5" stroke="currentColor" stroke-opacity="0.28"/>
+        <path d="M14 11.5v7.5a3.5 3.5 0 0 0 7 0v-7.5M17.5 11.5v17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M26 11.5c1.9 2.2 2.5 5.4 1.6 8.3-.7 2.2-1.6 3.7-1.6 8.7" stroke="#f4b860" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>`;
+      return `<section id="lang-gate" aria-label="Válassz nyelvet / Alege limba" class="min-h-[100dvh] px-3.5 sm:px-6 py-6 sm:py-10 flex items-center justify-center bg-surface" style="background-image: radial-gradient(circle at 15% 15%, rgba(159,64,34,0.07), transparent 45%), radial-gradient(circle at 85% 85%, rgba(19,42,31,0.08), transparent 48%);">
+        <div class="w-full max-w-2xl bg-surface-container-lowest rounded-[28px] overflow-hidden shadow-2xl border border-outline-variant/35 grid grid-cols-1 md:grid-cols-12">
+          <!-- Editorial Visual Welcome Panel -->
+          <div class="relative md:col-span-5 min-h-[190px] sm:min-h-[220px] md:min-h-[420px] bg-[#132a1f] text-[#fcf9f3] overflow-hidden flex flex-col justify-between p-5 sm:p-6">
+            <img src="/assets/hero-vebeat-editorial.jpg" alt="" class="absolute inset-0 w-full h-full object-cover object-center opacity-75">
+            <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(180deg, rgba(19,42,31,0.72) 0%, rgba(19,42,31,0.45) 45%, rgba(19,42,31,0.94) 100%);"></div>
+            <div class="relative z-10 flex items-center gap-2.5">
+              ${brandCrestSvg}
+              <div class="flex flex-col">
+                <span class="font-serif text-[26px] leading-none tracking-tight text-[#fcf9f3]">Vebeat</span>
+                <span class="text-[11px] font-medium tracking-wider uppercase text-[#ffdad0]/90 mt-1">Fuel your daily vibe.</span>
+              </div>
             </div>
-            <h1 class="font-serif text-headline-sm text-primary mt-2">Válassz nyelvet • Alege limba</h1>
-            <p class="text-body-sm text-on-surface-variant">Melyik nyelven töltsük be az oldalt és a recepteket?<br>În ce limbă dorești să încarci site-ul și rețetele?</p>
+            <div class="relative z-10 hidden md:flex flex-col gap-1.5 pt-8">
+              <p class="font-serif text-[22px] leading-snug text-[#fcf9f3]">413 séf-recept, két nyelven.</p>
+              <p class="text-[12px] text-[#e6dfd3] leading-relaxed">413 rețete de chef, în două limbi.</p>
+            </div>
           </div>
-          <div class="flex flex-col gap-3">
-            <button type="button" data-act="pickLang" data-lang="hu" ${busy ? 'disabled' : ''} class="w-full p-4 rounded-2xl border border-outline-variant/40 bg-surface hover:bg-secondary-fixed/35 hover:border-secondary/60 active:scale-[0.99] transition flex items-center gap-3.5 text-left shadow-sm disabled:opacity-70">
-              <span class="w-11 h-11 rounded-xl bg-primary text-on-primary font-bold text-title-md flex items-center justify-center shrink-0">HU</span>
-              <span class="flex-1 min-w-0">
-                <span class="block font-serif text-title-lg text-primary">Magyar</span>
-                <span class="block text-body-sm text-on-surface-variant">Teljes magyar nyelvű recepttár és főzőmód</span>
-              </span>
-              ${
-                langLoading === 'hu'
-                  ? icon('progress_activity', 'animate-spin text-secondary text-[22px] shrink-0')
-                  : icon('arrow_forward', 'text-secondary text-[22px] shrink-0')
-              }
-            </button>
-            <button type="button" data-act="pickLang" data-lang="ro" ${busy ? 'disabled' : ''} class="w-full p-4 rounded-2xl border border-outline-variant/40 bg-surface hover:bg-secondary-fixed/35 hover:border-secondary/60 active:scale-[0.99] transition flex items-center gap-3.5 text-left shadow-sm disabled:opacity-70">
-              <span class="w-11 h-11 rounded-xl bg-secondary text-on-secondary font-bold text-title-md flex items-center justify-center shrink-0">RO</span>
-              <span class="flex-1 min-w-0">
-                <span class="block font-serif text-title-lg text-primary">Română</span>
-                <span class="block text-body-sm text-on-surface-variant">Colecția completă de rețete în limba română</span>
-              </span>
-              ${
-                langLoading === 'ro'
-                  ? icon('progress_activity', 'animate-spin text-secondary text-[22px] shrink-0')
-                  : icon('arrow_forward', 'text-secondary text-[22px] shrink-0')
-              }
-            </button>
+
+          <!-- Language Options Panel -->
+          <div class="md:col-span-7 p-5 sm:p-7 flex flex-col justify-between gap-5">
+            <div class="flex flex-col gap-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-widest text-secondary">HU / RO</span>
+              <h1 class="font-serif text-[24px] sm:text-[28px] leading-tight text-primary">Válassz nyelvet / Alege limba</h1>
+              <p class="text-body-sm text-on-surface-variant leading-relaxed">Melyik nyelven jelenjenek meg a receptek és a felület?<br>În ce limbă dorești să încarci rețetele și interfața?</p>
+            </div>
+
+            <div class="flex flex-col gap-3">
+              <button type="button" data-act="pickLang" data-lang="hu" ${busy ? 'disabled' : ''} class="group w-full p-3.5 sm:p-4 rounded-2xl border border-outline-variant/45 bg-surface hover:bg-[#fcf9f3] hover:border-secondary hover:shadow-md active:scale-[0.99] transition flex items-center gap-3.5 text-left disabled:opacity-70">
+                ${huCrestSvg}
+                <span class="flex-1 min-w-0">
+                  <span class="block font-serif text-[21px] leading-tight text-primary">Magyar</span>
+                  <span class="block text-[12px] sm:text-body-sm text-on-surface-variant mt-0.5">Teljes magyar recepttár és főzőmód</span>
+                </span>
+                <span class="w-9 h-9 rounded-full bg-surface-container group-hover:bg-secondary group-hover:text-on-secondary text-secondary flex items-center justify-center transition shrink-0">
+                  ${
+                    langLoading === 'hu'
+                      ? icon('progress_activity', 'animate-spin text-[18px]')
+                      : icon('arrow_forward', 'text-[18px]')
+                  }
+                </span>
+              </button>
+
+              <button type="button" data-act="pickLang" data-lang="ro" ${busy ? 'disabled' : ''} class="group w-full p-3.5 sm:p-4 rounded-2xl border border-outline-variant/45 bg-surface hover:bg-[#fcf9f3] hover:border-secondary hover:shadow-md active:scale-[0.99] transition flex items-center gap-3.5 text-left disabled:opacity-70">
+                ${roCrestSvg}
+                <span class="flex-1 min-w-0">
+                  <span class="block font-serif text-[21px] leading-tight text-primary">Română</span>
+                  <span class="block text-[12px] sm:text-body-sm text-on-surface-variant mt-0.5">Colecția completă de rețete în română</span>
+                </span>
+                <span class="w-9 h-9 rounded-full bg-surface-container group-hover:bg-secondary group-hover:text-on-secondary text-secondary flex items-center justify-center transition shrink-0">
+                  ${
+                    langLoading === 'ro'
+                      ? icon('progress_activity', 'animate-spin text-[18px]')
+                      : icon('arrow_forward', 'text-[18px]')
+                  }
+                </span>
+              </button>
+            </div>
+
+            <p class="text-[11px] text-on-surface-variant leading-relaxed border-t border-outline-variant/25 pt-3">
+              A választásod után a fejlécben bármikor válthatsz nyelvet.<br>
+              După alegere, poți schimba limba oricând din bara de sus.
+            </p>
           </div>
-          <p class="text-label-sm text-center text-on-surface-variant leading-relaxed">
-            A választásod után fent a fejlécben bármikor válthatsz nyelvet.<br>
-            După alegere, poți schimba limba oricând din bara de sus.
-          </p>
         </div>
       </section>`;
     }
@@ -1252,8 +1296,8 @@ export function App() {
                 'Cine ca la restaurant în 20 de minute. Fără improvizații.'
               )}</h2>
               <p class="text-body-sm sm:text-body-md text-[#e8e3d9] leading-relaxed max-w-xl">${tr(
-                'Grammra pontos adagok, illatos szezonális fogások és lépésről lépésre vezető főzőmód — hogy minden este biztos siker legyen.',
-                'Cantități calibrate la gram, arome de sezon și Modul Interactiv de Gătit pas cu pas — ca fiecare seară în bucătărie să fie o reușită.'
+                'Grammra pontos adagok, illatos szezonális fogások és lépésről lépésre vezető főzőmód, hogy minden este biztos siker legyen.',
+                'Cantități calibrate la gram, arome de sezon și Modul Interactiv de Gătit pas cu pas, ca fiecare seară în bucătărie să fie o reușită.'
               )}</p>
               <div class="flex flex-wrap items-center gap-2.5 pt-1">
                 <a href="${heroCtaHref}" data-cta="hero-premium" class="min-h-[48px] px-5 sm:px-6 rounded-full bg-[#fcf9f3] hover:bg-[#ffdad0] text-[#132a1f] text-[14px] sm:text-title-md font-semibold inline-flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition">
@@ -1485,8 +1529,8 @@ export function App() {
                       'Ai acces nelimitat la toate rețetele premium, ingredientele exacte la gram, cronometre și exportul în Google Keep.'
                     )
                   : tr(
-                      `Azonnali hozzáférés a ${premiumCount} prémium recepthez, adagszámítóhoz, séf-időzítőkhöz és bevásárlólistához — bankkártyával biztonságosan, a Stripe-on keresztül.`,
-                      `Acces instant la cele ${premiumCount} rețete premium, calculator de porții, cronometre și listă de cumpărături — plată securizată prin Stripe.`
+                      `Azonnali hozzáférés a ${premiumCount} prémium recepthez, adagszámítóhoz, séf-időzítőkhöz és bevásárlólistához, biztonságos bankkártyás fizetéssel a Stripe-on keresztül.`,
+                      `Acces instant la cele ${premiumCount} rețete premium, calculator de porții, cronometre și listă de cumpărături, cu plată securizată prin Stripe.`
                     )
               }</p>
             </div>
@@ -2679,11 +2723,11 @@ export function App() {
           favs.length
             ? favs
                 .map((r: any) =>
-                  row(r, r.rating ? `${tr('Értékelés', 'Evaluare')}: ${r.rating} ★` : esc(r.difficulty))
+                  row(r, r.rating ? `${tr('Értékelés', 'Evaluare')}: ${r.rating}/5` : esc(r.difficulty))
                 )
                 .join('')
             : empty(
-                tr('Még nincs kedvenc recepted. Koppints a ♥ ikonra bármelyik receptnél.', 'Încă nu ai rețete favorite. Apasă pe ♥ la orice rețetă.'),
+                tr('Még nincs kedvenc recepted. Koppints a szív ikonra bármelyik receptnél.', 'Încă nu ai rețete favorite. Apasă pe pictograma inimă la orice rețetă.'),
                 '#/',
                 tr('Receptek felfedezése', 'Descoperă rețete')
               ),
@@ -4003,8 +4047,8 @@ export function App() {
         }
         toast(
           tr(
-            '🎉 Sikeres előfizetés! Minden prémium recept feloldva.',
-            '🎉 Abonament reușit! Toate rețetele premium sunt deblocate.'
+            'Sikeres előfizetés! Minden prémium recept feloldva.',
+            'Abonament reușit! Toate rețetele premium sunt deblocate.'
           )
         );
       }
