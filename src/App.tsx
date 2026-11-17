@@ -64,14 +64,22 @@ function loadState() {
     }
     const raw = JSON.parse(localStorage.getItem(KEY) || '{}');
     const urlLang = params.get('lang');
-    const forceChoose = urlLang === 'choose' || params.has('clear');
-    const hasUrlLang = !forceChoose && (urlLang === 'ro' || urlLang === 'hu');
-    const lang: 'hu' | 'ro' = hasUrlLang
-      ? (urlLang as 'hu' | 'ro')
-      : raw.lang === 'ro'
+    const forceRedetect = params.has('clear');
+    const hasUrlLang = !forceRedetect && (urlLang === 'ro' || urlLang === 'hu');
+    const navHint: 'hu' | 'ro' =
+      typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('ro')
         ? 'ro'
         : 'hu';
-    const langSelected = !forceChoose && (hasUrlLang || raw.langSelected === true);
+    const lang: 'hu' | 'ro' = hasUrlLang
+      ? (urlLang as 'hu' | 'ro')
+      : forceRedetect
+        ? navHint
+        : raw.lang === 'ro'
+          ? 'ro'
+          : raw.lang === 'hu'
+            ? 'hu'
+            : navHint;
+    const langSelected = !forceRedetect && (hasUrlLang || raw.langSelected === true);
     const cookieConsent: 'all' | 'essential' | null =
       raw.cookieConsent === 'all' || raw.cookieConsent === 'essential' ? raw.cookieConsent : null;
     return {
@@ -410,7 +418,6 @@ export function App() {
     let selectedPlan: 'monthly' | 'yearly' = 'monthly';
     let lastSubPlanRouteKey = '';
     let langMenuOpen = false;
-    let langLoading: 'hu' | 'ro' | null = null;
     let cookiePrefsOpen = false;
     let subConsentTerms = false;
     let subConsentWaiver = false;
@@ -917,97 +924,6 @@ export function App() {
         }
       </div>`;
     };
-
-    function viewLanguageGate() {
-      const busy = Boolean(langLoading);
-      const huCrestSvg = `<svg viewBox="0 0 36 36" class="w-10 h-10 rounded-full shrink-0 shadow-sm ring-1 ring-black/10" aria-hidden="true">
-        <clipPath id="vg-hu"><circle cx="18" cy="18" r="18"/></clipPath>
-        <g clip-path="url(#vg-hu)">
-          <rect x="0" y="0" width="36" height="12" fill="#b33d2e"/>
-          <rect x="0" y="12" width="36" height="12" fill="#fcf9f3"/>
-          <rect x="0" y="24" width="36" height="12" fill="#234d36"/>
-        </g>
-      </svg>`;
-      const roCrestSvg = `<svg viewBox="0 0 36 36" class="w-10 h-10 rounded-full shrink-0 shadow-sm ring-1 ring-black/10" aria-hidden="true">
-        <clipPath id="vg-ro"><circle cx="18" cy="18" r="18"/></clipPath>
-        <g clip-path="url(#vg-ro)">
-          <rect x="0" y="0" width="12" height="36" fill="#1d3c6e"/>
-          <rect x="12" y="0" width="12" height="36" fill="#eab342"/>
-          <rect x="24" y="0" width="12" height="36" fill="#b33d2e"/>
-        </g>
-      </svg>`;
-      const brandCrestSvg = `<svg viewBox="0 0 40 40" fill="none" class="w-8 h-8 text-[#fcf9f3]" aria-hidden="true">
-        <circle cx="20" cy="20" r="18.5" stroke="currentColor" stroke-opacity="0.28"/>
-        <path d="M14 11.5v7.5a3.5 3.5 0 0 0 7 0v-7.5M17.5 11.5v17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        <path d="M26 11.5c1.9 2.2 2.5 5.4 1.6 8.3-.7 2.2-1.6 3.7-1.6 8.7" stroke="#f4b860" stroke-width="1.6" stroke-linecap="round"/>
-      </svg>`;
-      return `<section id="lang-gate" aria-label="Válassz nyelvet / Alege limba" class="min-h-[100dvh] px-3.5 sm:px-6 py-6 sm:py-10 flex items-center justify-center bg-surface" style="background-image: radial-gradient(circle at 15% 15%, rgba(159,64,34,0.07), transparent 45%), radial-gradient(circle at 85% 85%, rgba(19,42,31,0.08), transparent 48%);">
-        <div class="w-full max-w-2xl bg-surface-container-lowest rounded-[28px] overflow-hidden shadow-2xl border border-outline-variant/35 grid grid-cols-1 md:grid-cols-12">
-          <!-- Editorial Visual Welcome Panel -->
-          <div class="relative md:col-span-5 min-h-[190px] sm:min-h-[220px] md:min-h-[420px] bg-[#132a1f] text-[#fcf9f3] overflow-hidden flex flex-col justify-between p-5 sm:p-6">
-            <img src="/assets/hero-vebeat-editorial.jpg" alt="" class="absolute inset-0 w-full h-full object-cover object-center opacity-75">
-            <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(180deg, rgba(19,42,31,0.72) 0%, rgba(19,42,31,0.45) 45%, rgba(19,42,31,0.94) 100%);"></div>
-            <div class="relative z-10 flex items-center gap-2.5">
-              ${brandCrestSvg}
-              <div class="flex flex-col">
-                <span class="font-serif text-[26px] leading-none tracking-tight text-[#fcf9f3]">Vebeat</span>
-                <span class="text-[11px] font-medium tracking-wider uppercase text-[#ffdad0]/90 mt-1">Fuel your daily vibe.</span>
-              </div>
-            </div>
-            <div class="relative z-10 hidden md:flex flex-col gap-1.5 pt-8">
-              <p class="font-serif text-[22px] leading-snug text-[#fcf9f3]">413 séf-recept, két nyelven.</p>
-              <p class="text-[12px] text-[#e6dfd3] leading-relaxed">413 rețete de chef, în două limbi.</p>
-            </div>
-          </div>
-
-          <!-- Language Options Panel -->
-          <div class="md:col-span-7 p-5 sm:p-7 flex flex-col justify-between gap-5">
-            <div class="flex flex-col gap-1.5">
-              <span class="text-[11px] font-bold uppercase tracking-widest text-secondary">HU / RO</span>
-              <h1 class="font-serif text-[24px] sm:text-[28px] leading-tight text-primary">Válassz nyelvet / Alege limba</h1>
-              <p class="text-body-sm text-on-surface-variant leading-relaxed">Melyik nyelven jelenjenek meg a receptek és a felület?<br>În ce limbă dorești să încarci rețetele și interfața?</p>
-            </div>
-
-            <div class="flex flex-col gap-3">
-              <button type="button" data-act="pickLang" data-lang="hu" ${busy ? 'disabled' : ''} class="group w-full p-3.5 sm:p-4 rounded-2xl border border-outline-variant/45 bg-surface hover:bg-[#fcf9f3] hover:border-secondary hover:shadow-md active:scale-[0.99] transition flex items-center gap-3.5 text-left disabled:opacity-70">
-                ${huCrestSvg}
-                <span class="flex-1 min-w-0">
-                  <span class="block font-serif text-[21px] leading-tight text-primary">Magyar</span>
-                  <span class="block text-[12px] sm:text-body-sm text-on-surface-variant mt-0.5">Teljes magyar recepttár és főzőmód</span>
-                </span>
-                <span class="w-9 h-9 rounded-full bg-surface-container group-hover:bg-secondary group-hover:text-on-secondary text-secondary flex items-center justify-center transition shrink-0">
-                  ${
-                    langLoading === 'hu'
-                      ? icon('progress_activity', 'animate-spin text-[18px]')
-                      : icon('arrow_forward', 'text-[18px]')
-                  }
-                </span>
-              </button>
-
-              <button type="button" data-act="pickLang" data-lang="ro" ${busy ? 'disabled' : ''} class="group w-full p-3.5 sm:p-4 rounded-2xl border border-outline-variant/45 bg-surface hover:bg-[#fcf9f3] hover:border-secondary hover:shadow-md active:scale-[0.99] transition flex items-center gap-3.5 text-left disabled:opacity-70">
-                ${roCrestSvg}
-                <span class="flex-1 min-w-0">
-                  <span class="block font-serif text-[21px] leading-tight text-primary">Română</span>
-                  <span class="block text-[12px] sm:text-body-sm text-on-surface-variant mt-0.5">Colecția completă de rețete în română</span>
-                </span>
-                <span class="w-9 h-9 rounded-full bg-surface-container group-hover:bg-secondary group-hover:text-on-secondary text-secondary flex items-center justify-center transition shrink-0">
-                  ${
-                    langLoading === 'ro'
-                      ? icon('progress_activity', 'animate-spin text-[18px]')
-                      : icon('arrow_forward', 'text-[18px]')
-                  }
-                </span>
-              </button>
-            </div>
-
-            <p class="text-[11px] text-on-surface-variant leading-relaxed border-t border-outline-variant/25 pt-3">
-              A választásod után a fejlécben bármikor válthatsz nyelvet.<br>
-              După alegere, poți schimba limba oricând din bara de sus.
-            </p>
-          </div>
-        </div>
-      </section>`;
-    }
 
     const avatarPill = () => {
       const uName = activeUserName();
@@ -3515,33 +3431,26 @@ export function App() {
 
     /* ---------- Actions ---------- */
     async function applyLanguage(nextLang: 'hu' | 'ro', showToast = true) {
-      const wasSelected = S.langSelected;
-      const changed = S.lang !== nextLang;
+      const changed = S.lang !== nextLang || !S.langSelected;
       S.lang = nextLang;
       S.langSelected = true;
       langMenuOpen = false;
       save();
       document.documentElement.lang = S.lang;
-      if (location.search.includes('clear') || location.search.includes('lang=choose')) {
+      if (location.search.includes('clear') || location.search.includes('lang=')) {
         const sp = new URLSearchParams(location.search);
         sp.delete('clear');
-        if (sp.get('lang') === 'choose') sp.delete('lang');
         const qs = sp.toString();
         history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
       }
-      if (!wasSelected) {
-        langLoading = nextLang;
-        render(true);
-      }
-      if (changed || !wasSelected || !publicRecipes.length) {
+      if (changed || !publicRecipes.length) {
         Object.keys(recipeDetailsCache).forEach(k => delete recipeDetailsCache[k]);
         await syncMeAndRecipes();
       }
-      langLoading = null;
       if (showToast) {
         toast(S.lang === 'ro' ? 'Limbă selectată: Română (RO)' : 'Kiválasztott nyelv: Magyar (HU)');
       }
-      render(wasSelected);
+      render(true);
     }
 
     const actions: Record<string, (el: HTMLElement, e: Event) => void> = {
@@ -4072,9 +3981,12 @@ export function App() {
         showFooter = true;
 
       if (!S.langSelected) {
-        html = viewLanguageGate();
-        showTabs = false;
-        showFooter = false;
+        html =
+          brandHeader() +
+          `<div class="${PAGE_X} py-24 flex flex-col items-center justify-center gap-3 text-center text-on-surface-variant">
+            ${icon('progress_activity', 'animate-spin text-secondary text-[28px]')}
+            <p class="text-body-sm">${tr('Betöltés...', 'Se încarcă...')}</p>
+          </div>`;
       } else if (!page) {
         html = viewHome();
         tab = 'home';
@@ -4203,33 +4115,62 @@ export function App() {
     window.addEventListener('hashchange', onHashChange);
     navigator.serviceWorker?.register('/sw.js').catch(() => {});
 
-    // Initial load: wait for visitor language selection on first entry,
-    // or load immediately in the chosen / URL-specified language.
+    // Initial load: resolve visitor language automatically via IP geo lookup on first visit,
+    // or use saved/URL language right away, then sync profile & recipes.
+    let cancelled = false;
+    const rtInit = route();
+    const initSessionId =
+      rtInit.q.get('checkout') === 'success' ? rtInit.q.get('session_id') || '' : '';
+
+    const finishBoot = async () => {
+      if (cancelled) return;
+      await syncMeAndRecipes(initSessionId);
+      if (cancelled) return;
+      const rtAfter = route();
+      if (clerk.enabled && clerk.isSignedIn && rtAfter.p[0] === 'belepes') {
+        const ret = rtAfter.q.get('return') || '';
+        goReplace(
+          ret === 'elofizetes'
+            ? '#/elofizetes'
+            : ret
+              ? `#/r/${encodeURIComponent(ret)}`
+              : '#/profil'
+        );
+      } else {
+        render();
+      }
+    };
+
     if (S.langSelected) {
       save();
-      const rtInit = route();
-      const initSessionId =
-        rtInit.q.get('checkout') === 'success' ? rtInit.q.get('session_id') || '' : '';
-      syncMeAndRecipes(initSessionId).then(() => {
-        const rtAfter = route();
-        if (clerk.enabled && clerk.isSignedIn && rtAfter.p[0] === 'belepes') {
-          const ret = rtAfter.q.get('return') || '';
-          goReplace(
-            ret === 'elofizetes'
-              ? '#/elofizetes'
-              : ret
-                ? `#/r/${encodeURIComponent(ret)}`
-                : '#/profil'
-          );
-        } else {
-          render();
-        }
-      });
+      finishBoot();
     } else {
       render();
+      fetch('/api/geo', { signal: AbortSignal.timeout(1500) })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (!cancelled && data && (data.lang === 'ro' || data.lang === 'hu')) {
+            S.lang = data.lang;
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (cancelled) return;
+          S.langSelected = true;
+          document.documentElement.lang = S.lang;
+          save();
+          if (location.search.includes('clear')) {
+            const sp = new URLSearchParams(location.search);
+            sp.delete('clear');
+            const qs = sp.toString();
+            history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+          }
+          finishBoot();
+        });
     }
 
     return () => {
+      cancelled = true;
       setClerkAuthView({ open: false, reg: false });
       $app.removeEventListener('click', onClick);
       $app.removeEventListener('change', onChange);

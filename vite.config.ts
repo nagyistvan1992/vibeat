@@ -85,6 +85,10 @@ function vercelApiPlugin(): Plugin {
           const mod = await loadApi('/api/health.ts');
           return await mod.default(req, res);
         }
+        if (pathname === '/api/geo') {
+          const mod = await loadApi('/api/geo.ts');
+          return await mod.default(req, res);
+        }
         res.status(404).json({ error: 'API endpoint not found' });
       } catch (err: any) {
         console.error('[Vite API Middleware Error]', err);
