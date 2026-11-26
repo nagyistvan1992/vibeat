@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { verifyClerkRequest } from '../_lib/auth.js';
+import { verifyClerkRequest, resolveAppOrigin } from '../_lib/auth.js';
 import { getUserById, upsertUserSubscription } from '../../src/db/index.js';
 
 export default async function handler(req: any, res: any) {
@@ -16,10 +16,8 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const dbUser = await getUserById(authUser.userId);
-    const origin =
-      process.env.APP_URL ||
-      (req.headers?.origin ? String(req.headers.origin) : 'http://localhost:5173');
+    let dbUser = await getUserById(authUser.userId);
+    const origin = resolveAppOrigin(req);
 
     const stripeSecret = process.env.STRIPE_SECRET_KEY;
     if (!stripeSecret || stripeSecret.startsWith('sk_test_...')) {
@@ -47,15 +45,37 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    if (!dbUser?.stripe_customer_id) {
+    const stripe = new Stripe(stripeSecret);
+    let customerId =
+      dbUser?.stripe_customer_id && !dbUser.stripe_customer_id.startsWith('cus_dev_')
+        ? dbUser.stripe_customer_id
+        : null;
+
+    if (!customerId && authUser.email && !authUser.email.endsWith('@clerk.user')) {
+      const found = await stripe.customers.list({ email: authUser.email, limit: 5 });
+      const match = found.data.find(
+        c =>
+          !(c as any).deleted &&
+          (!c.metadata?.clerkUserId || c.metadata.clerkUserId === authUser.userId)
+      );
+      if (match) {
+        customerId = match.id;
+        dbUser = await upsertUserSubscription({
+          id: authUser.userId,
+          email: authUser.email,
+          stripe_customer_id: customerId,
+        });
+      }
+    }
+
+    if (!customerId) {
       return res.status(400).json({
         error: 'Nincs aktív Stripe ügyfél-azonosító ehhez a fiókhoz.',
       });
     }
 
-    const stripe = new Stripe(stripeSecret);
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: dbUser.stripe_customer_id,
+      customer: customerId,
       return_url: `${origin}/#/profil`,
     });
 

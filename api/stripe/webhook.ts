@@ -5,22 +5,6 @@ import {
 } from '../../src/db/index.js';
 import type { SubscriptionStatus } from '../../src/db/schema.js';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-async function readRawBody(req: any): Promise<Buffer> {
-  if (Buffer.isBuffer(req.body)) return req.body;
-  if (typeof req.body === 'string') return Buffer.from(req.body, 'utf8');
-  const chunks: Buffer[] = [];
-  for await (const chunk of req) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-  }
-  return Buffer.concat(chunks);
-}
-
 function mapStripeStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
   switch (status) {
     case 'active':
@@ -37,41 +21,52 @@ function mapStripeStatus(status: Stripe.Subscription.Status): SubscriptionStatus
   }
 }
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+function extractPeriodEnd(sub: Stripe.Subscription | null | undefined): Date | null {
+  if (!sub) return null;
+  const raw =
+    (sub as any).current_period_end ?? (sub.items?.data?.[0] as any)?.current_period_end;
+  return typeof raw === 'number' ? new Date(raw * 1000) : null;
+}
 
+export async function POST(request: Request): Promise<Response> {
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  const signature = req.headers?.['stripe-signature'];
+  const signature = request.headers.get('stripe-signature');
 
   if (!stripeSecret || !webhookSecret) {
-    return res.status(500).json({
-      error: 'Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET on server.',
-    });
+    return Response.json(
+      { error: 'Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET on server.' },
+      { status: 500 }
+    );
   }
 
-  if (!signature || typeof signature !== 'string') {
-    return res.status(400).json({ error: 'Missing stripe-signature header.' });
+  if (!signature) {
+    return Response.json({ error: 'Missing stripe-signature header.' }, { status: 400 });
   }
 
   const stripe = new Stripe(stripeSecret);
   let event: Stripe.Event;
 
   try {
-    const rawBody = await readRawBody(req);
+    const rawBody = Buffer.from(await request.arrayBuffer());
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err: any) {
     console.error('[Stripe Webhook] Signature verification failed:', err?.message);
-    return res.status(400).json({ error: `Webhook Error: ${err?.message}` });
+    return Response.json({ error: `Webhook Error: ${err?.message}` }, { status: 400 });
   }
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as Stripe.Checkout.Session;
+        const isPaid =
+          event.type === 'checkout.session.async_payment_succeeded' ||
+          session.payment_status === 'paid' ||
+          session.payment_status === 'no_payment_required';
+
+        if (!isPaid) break;
+
         const clerkUserId =
           session.client_reference_id || session.metadata?.clerkUserId || '';
         const customerId =
@@ -81,7 +76,7 @@ export default async function handler(req: any, res: any) {
         const email =
           session.customer_details?.email ||
           session.customer_email ||
-          `${clerkUserId}@vebeat.ro`;
+          (clerkUserId ? `${clerkUserId}@vebeat.ro` : undefined);
 
         let subscriptionEndDate: Date | null = null;
         if (session.subscription) {
@@ -91,12 +86,8 @@ export default async function handler(req: any, res: any) {
               : session.subscription.id;
           try {
             const sub = await stripe.subscriptions.retrieve(subId);
-            const periodEnd = (sub as any).current_period_end;
-            if (typeof periodEnd === 'number') {
-              subscriptionEndDate = new Date(periodEnd * 1000);
-            }
+            subscriptionEndDate = extractPeriodEnd(sub);
           } catch {
-            // fallback to +30 days if retrieve fails
             subscriptionEndDate = new Date(Date.now() + 30 * 24 * 3600 * 1000);
           }
         }
@@ -119,6 +110,7 @@ export default async function handler(req: any, res: any) {
         break;
       }
 
+      case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId =
@@ -127,9 +119,7 @@ export default async function handler(req: any, res: any) {
             : subscription.customer.id;
         const clerkUserId = subscription.metadata?.clerkUserId || '';
         const mappedStatus = mapStripeStatus(subscription.status);
-        const periodEnd = (subscription as any).current_period_end;
-        const subscriptionEndDate =
-          typeof periodEnd === 'number' ? new Date(periodEnd * 1000) : null;
+        const subscriptionEndDate = extractPeriodEnd(subscription);
 
         if (clerkUserId) {
           await upsertUserSubscription({
@@ -177,9 +167,16 @@ export default async function handler(req: any, res: any) {
         break;
     }
 
-    return res.status(200).json({ received: true, type: event.type });
+    return Response.json({ received: true, type: event.type }, { status: 200 });
   } catch (err: any) {
     console.error('[Stripe Webhook] Handler error:', err);
-    return res.status(500).json({ error: 'Webhook handler failed.' });
+    return Response.json({ error: 'Webhook handler failed.' }, { status: 500 });
   }
+}
+
+export async function GET(): Promise<Response> {
+  return Response.json(
+    { error: 'Method Not Allowed' },
+    { status: 405, headers: { Allow: 'POST' } }
+  );
 }

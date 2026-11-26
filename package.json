@@ -4,9 +4,9 @@
   "version": "3.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5173 --host 127.0.0.1",
+    "dev": "vite --port 5173 --host",
     "build": "vite build",
-    "preview": "vite preview --port 5173 --host 127.0.0.1",
+    "preview": "vite preview --port 5173 --host",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed.ts"

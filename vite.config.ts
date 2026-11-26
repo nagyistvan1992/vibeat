@@ -75,6 +75,35 @@ function vercelApiPlugin(): Plugin {
         }
         if (pathname === '/api/stripe/webhook') {
           const mod = await loadApi('/api/stripe/webhook.ts');
+          if (typeof mod.POST === 'function' || typeof mod.GET === 'function') {
+            const chunks: Buffer[] = [];
+            for await (const chunk of req) {
+              chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+            }
+            const rawBuf = Buffer.concat(chunks);
+            const headers = new Headers();
+            for (const [k, v] of Object.entries(req.headers || {})) {
+              if (Array.isArray(v)) v.forEach(item => headers.append(k, String(item)));
+              else if (typeof v === 'string') headers.set(k, v);
+            }
+            const method = (req.method || 'GET').toUpperCase();
+            const fn = mod[method];
+            if (typeof fn !== 'function') {
+              res.setHeader('Allow', 'POST');
+              return res.status(405).json({ error: 'Method Not Allowed' });
+            }
+            const webReq = new Request(urlObj.href, {
+              method,
+              headers,
+              body: method === 'GET' || method === 'HEAD' ? undefined : rawBuf,
+            });
+            const webRes: Response = await fn(webReq);
+            res.statusCode = webRes.status;
+            webRes.headers.forEach((val, key) => res.setHeader(key, val));
+            const outBuf = Buffer.from(await webRes.arrayBuffer());
+            res.end(outBuf);
+            return;
+          }
           return await mod.default(req, res);
         }
         if (pathname === '/api/me') {

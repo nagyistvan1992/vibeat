@@ -6,6 +6,18 @@ import {
   viewLegalContent,
   type LegalSection,
 } from './legal';
+import {
+  applySymmetricQtyStep,
+  formatShoppingChecklist,
+  formatShoppingQty,
+  getSymmetricStep,
+  mergeRecipeIngredientsIntoList,
+  normalizeStoredShoppingList,
+  shoppingStore,
+  type ChecklistExportMode,
+  type ShoppingItem,
+} from './shoppingList';
+import { ShoppingDrawerAndToast } from './components/ShoppingDrawer';
 
 export interface ClerkBridgeValue {
   enabled: boolean;
@@ -14,7 +26,7 @@ export interface ClerkBridgeValue {
   userId: string | null;
   email: string | null;
   fullName: string | null;
-  getToken: () => Promise<string | null>;
+  getToken: (opts?: { skipCache?: boolean }) => Promise<string | null>;
   signOut: () => Promise<void>;
   renderSignIn: () => React.ReactNode;
   renderSignUp: () => React.ReactNode;
@@ -42,7 +54,7 @@ const DEF = {
   servings: {} as Record<string, number>,
   cooked: [] as { id: string; at: number }[],
   mine: [] as any[],
-  shopping: [] as { text: string; from: string }[],
+  shopping: [] as ShoppingItem[],
   notes: {} as Record<string, string>,
   progress: {} as Record<string, { step: number; at: number }>,
   timers: {} as Record<string, { left: number; total: number; run: boolean; endAt: number }>,
@@ -89,7 +101,10 @@ function loadState() {
       servings: raw.servings && typeof raw.servings === 'object' ? raw.servings : {},
       cooked: Array.isArray(raw.cooked) ? raw.cooked : [],
       mine: Array.isArray(raw.mine) ? raw.mine : [],
-      shopping: Array.isArray(raw.shopping) ? raw.shopping : [],
+      shopping: normalizeStoredShoppingList(
+        Array.isArray(raw.shopping) ? raw.shopping : [],
+        raw.unit === 'dkg' ? 'dkg' : 'metric'
+      ),
       notes: raw.notes && typeof raw.notes === 'object' ? raw.notes : {},
       progress: raw.progress && typeof raw.progress === 'object' ? raw.progress : {},
       timers: raw.timers && typeof raw.timers === 'object' ? raw.timers : {},
@@ -394,6 +409,18 @@ const FILTERS: Record<string, (r: any) => boolean> = {
 
 export function App() {
   const clerk = useContext(ClerkBridgeContext);
+  const clerkRef = useRef(clerk);
+  clerkRef.current = clerk;
+  // Preserve Stripe checkout session_id across React StrictMode remounts & Clerk async hydration
+  const pendingCheckoutRef = useRef<{ sessionId: string; active: boolean } | null>(null);
+  if (pendingCheckoutRef.current === null && typeof window !== 'undefined') {
+    const [, initQs] = window.location.hash.slice(1).split('?');
+    const initParams = new URLSearchParams(initQs || '');
+    pendingCheckoutRef.current = {
+      active: initParams.get('checkout') === 'success',
+      sessionId: initParams.get('session_id') || '',
+    };
+  }
   const clerkMountRef = useRef<HTMLDivElement | null>(null);
   const appRef = useRef<HTMLElement | null>(null);
   const [clerkAuthView, setClerkAuthView] = useState<{ open: boolean; reg: boolean }>({
@@ -421,6 +448,16 @@ export function App() {
     let cookiePrefsOpen = false;
     let subConsentTerms = false;
     let subConsentWaiver = false;
+    let shopBtnResetTimer: ReturnType<typeof setTimeout> | null = null;
+
+    shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
+    shoppingStore.registerAppBridge(nextItems => {
+      S.shopping = nextItems;
+      const rt = route();
+      if (rt.p[0] === 'profil' || rt.p[0] === 'r') {
+        render(true);
+      }
+    });
 
     function save() {
       try {
@@ -432,11 +469,15 @@ export function App() {
       }
     }
 
-    const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const getAuthHeaders = async (forceFreshToken = false): Promise<Record<string, string>> => {
       const headers: Record<string, string> = {};
-      if (clerk.enabled) {
-        if (clerk.isSignedIn) {
-          const tok = await clerk.getToken();
+      const liveClerk = clerkRef.current;
+      if (liveClerk.enabled) {
+        if (liveClerk.isSignedIn) {
+          let tok = await liveClerk.getToken(forceFreshToken ? { skipCache: true } : undefined);
+          if (!tok && !forceFreshToken) {
+            tok = await liveClerk.getToken({ skipCache: true });
+          }
           if (tok) headers['Authorization'] = `Bearer ${tok}`;
         }
       } else if (S.user) {
@@ -457,7 +498,9 @@ export function App() {
     const isFav = (id: string) => S.favs.includes(id);
     const servingsOf = (r: any) => S.servings[r.id] || r.servings || 2;
     const hasSub = () => currentSubscriptionStatus === 'active';
-    const isUserSignedIn = () => (clerk.enabled ? clerk.isSignedIn : Boolean(S.user));
+    const isAuthReady = () => (!clerkRef.current.enabled ? true : clerkRef.current.isLoaded);
+    const isUserSignedIn = () =>
+      clerkRef.current.enabled ? clerkRef.current.isSignedIn : Boolean(S.user);
 
     function amountText(ing: any, r: any) {
       if (ing.qty == null) return ing.unit;
@@ -501,21 +544,6 @@ export function App() {
           }
         });
       return { p, q: new URLSearchParams(qs || '') };
-    }
-
-    function formatNotesText(r: any, mode: 'keep' | 'md' = 'keep') {
-      const checked = S.checked[r.id] || [];
-      const head =
-        mode === 'md'
-          ? `# ${r.title} (${servingsOf(r)} ${srvWord()})`
-          : `${r.title} (${servingsOf(r)} ${srvWord()})`;
-      const lines = (r.ingredients || []).map((ing: any, i: number) => {
-        const done = checked.includes(i);
-        const box = done ? '[x]' : '[ ]';
-        const qty = ing.qty == null ? `(${ing.unit})` : amountText(ing, r);
-        return `${box} ${ing.qty == null ? `${ing.name} ${qty}` : `${qty} ${ing.name}`}`.trim();
-      });
-      return `${head}\n\n${lines.join('\n')}`;
     }
 
     /* ---------- Timers ---------- */
@@ -722,27 +750,51 @@ export function App() {
     }
 
     /* ---------- Backend API Sync (/api/recipes, /api/recipes/[slug], /api/me, /api/stripe/*) ---------- */
-    async function syncMeAndRecipes(sessionId = '') {
+    async function syncMeAndRecipes(sessionId = '', reconcile = false) {
       try {
-        const headers = await getAuthHeaders();
-        const meUrl = sessionId
-          ? `/api/me?session_id=${encodeURIComponent(sessionId)}`
-          : '/api/me';
-        const [recipesRes, meRes] = await Promise.all([
+        const forceFresh = Boolean(sessionId || reconcile);
+        const headers = await getAuthHeaders(forceFresh);
+        const meParams = new URLSearchParams();
+        if (sessionId) meParams.set('session_id', sessionId);
+        if (reconcile) meParams.set('reconcile', '1');
+        const meUrl = `/api/me${meParams.toString() ? '?' + meParams.toString() : ''}`;
+
+        const [recipesRes, initialMeRes] = await Promise.all([
           fetch(`/api/recipes?lang=${S.lang}`),
-          fetch(meUrl, { headers }),
+          fetch(meUrl, { headers, credentials: 'same-origin' }),
         ]);
         if (recipesRes.ok) {
           const data = await recipesRes.json();
           publicRecipes = data.recipes || [];
           seasonalItems = data.seasonal || [];
         }
-        if (meRes.ok) {
-          const meData = await meRes.json();
+
+        let meData: any = initialMeRes.ok ? await initialMeRes.json() : null;
+
+        // If Clerk reports signed-in on client but server saw an expired cached token, mint a fresh JWT and retry once
+        if (
+          meData &&
+          !meData.authenticated &&
+          clerkRef.current.enabled &&
+          clerkRef.current.isSignedIn
+        ) {
+          const freshHeaders = await getAuthHeaders(true);
+          if (freshHeaders['Authorization']) {
+            const retryRes = await fetch(meUrl, {
+              headers: freshHeaders,
+              credentials: 'same-origin',
+            });
+            if (retryRes.ok) {
+              meData = await retryRes.json();
+            }
+          }
+        }
+
+        if (meData) {
           if (meData.authenticated && meData.user) {
             currentSubscriptionStatus = meData.user.subscription_status || 'free';
             currentSubscriptionEnd = meData.user.subscription_end_date || null;
-          } else {
+          } else if (isAuthReady()) {
             currentSubscriptionStatus = 'free';
             currentSubscriptionEnd = null;
           }
@@ -757,9 +809,30 @@ export function App() {
       if (mine) return { ...mine, is_free: true, locked: false };
       try {
         const headers = await getAuthHeaders();
-        const res = await fetch(`/api/recipes/${encodeURIComponent(slug)}?lang=${S.lang}`, { headers });
+        let res = await fetch(`/api/recipes/${encodeURIComponent(slug)}?lang=${S.lang}`, {
+          headers,
+          credentials: 'same-origin',
+        });
         if (!res.ok) return null;
-        const data = await res.json();
+        let data = await res.json();
+        if (
+          data.viewer &&
+          !data.viewer.authenticated &&
+          clerkRef.current.enabled &&
+          clerkRef.current.isSignedIn
+        ) {
+          const freshHeaders = await getAuthHeaders(true);
+          if (freshHeaders['Authorization']) {
+            const retryRes = await fetch(
+              `/api/recipes/${encodeURIComponent(slug)}?lang=${S.lang}`,
+              {
+                headers: freshHeaders,
+                credentials: 'same-origin',
+              }
+            );
+            if (retryRes.ok) data = await retryRes.json();
+          }
+        }
         if (data.viewer?.subscription_status && data.viewer.subscription_status !== 'anonymous') {
           currentSubscriptionStatus = data.viewer.subscription_status;
         }
@@ -791,11 +864,12 @@ export function App() {
       }
       try {
         toast(tr('Stripe fizetési munkamenet indítása...', 'Se pornește sesiunea de plată Stripe...'));
-        const headers = await getAuthHeaders();
+        const headers = await getAuthHeaders(true);
         headers['Content-Type'] = 'application/json';
         const res = await fetch('/api/stripe/checkout', {
           method: 'POST',
           headers,
+          credentials: 'same-origin',
           body: JSON.stringify({ returnSlug, plan, lang: S.lang }),
         });
         const data = await res.json();
@@ -805,9 +879,9 @@ export function App() {
         }
         // Clear cached recipe details so unlocked state reloads fresh
         Object.keys(recipeDetailsCache).forEach(k => delete recipeDetailsCache[k]);
-        await syncMeAndRecipes();
         if (data.url) {
           if (data.mode === 'dev_simulated_checkout') {
+            await syncMeAndRecipes('', true);
             toast(tr('Vebeat Prémium előfizetés aktiválva!', 'Abonamentul Vebeat Premium a fost activat!'));
             const hashIdx = data.url.indexOf('#/');
             if (hashIdx !== -1) {
@@ -825,11 +899,12 @@ export function App() {
     async function openStripePortal(action = 'manage') {
       try {
         toast(tr('Előfizetés-kezelő megnyitása...', 'Se deschide gestionarea abonamentului...'));
-        const headers = await getAuthHeaders();
+        const headers = await getAuthHeaders(true);
         headers['Content-Type'] = 'application/json';
         const res = await fetch('/api/stripe/portal', {
           method: 'POST',
           headers,
+          credentials: 'same-origin',
           body: JSON.stringify({ action }),
         });
         const data = await res.json();
@@ -857,12 +932,14 @@ export function App() {
     }
 
     /* ---------- UI Components ---------- */
-    const activeUserName = () =>
-      clerk.enabled
-        ? clerk.isSignedIn
-          ? clerk.fullName || clerk.email || 'Séf'
+    const activeUserName = () => {
+      const liveClerk = clerkRef.current;
+      return liveClerk.enabled
+        ? liveClerk.isSignedIn
+          ? liveClerk.fullName || liveClerk.email || 'Séf'
           : null
         : S.user?.name || null;
+    };
 
     const langName = (l: 'hu' | 'ro') => (l === 'ro' ? 'Română' : 'Magyar');
 
@@ -925,12 +1002,26 @@ export function App() {
       </div>`;
     };
 
+    const shoppingBagTrigger = () => {
+      const pendingCount = S.shopping.filter(it => !it.checked).length;
+      return `<button type="button" data-act="open-shop" aria-label="${tr(
+        `Bevásárlólista (${pendingCount} tétel)`,
+        `Listă de cumpărături (${pendingCount} articole)`
+      )}" title="${tr('Bevásárlólista megnyitása', 'Deschide lista de cumpărături')}" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface-container-lowest border border-outline-variant/45 hover:border-primary/40 hover:bg-surface-container-low text-primary flex items-center justify-center shadow-sm active:scale-95 transition shrink-0">
+        ${icon('shopping_bag', 'text-[18px] sm:text-[19px] text-primary')}
+        <span data-shop-badge class="${
+          pendingCount > 0 ? 'inline-flex' : 'hidden'
+        } absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-secondary text-on-secondary text-[10px] font-bold items-center justify-center shadow-sm leading-none">${pendingCount}</span>
+      </button>`;
+    };
+
     const avatarPill = () => {
       const uName = activeUserName();
       const rt = route();
       const curSlug = rt.p[0] === 'r' && rt.p[1] ? rt.p[1] : '';
       const subHref = curSlug ? `#/elofizetes?return=${encodeURIComponent(curSlug)}` : '#/elofizetes';
       return `<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+        ${shoppingBagTrigger()}
         ${langBtn()}
         ${
           hasSub()
@@ -2106,53 +2197,38 @@ export function App() {
                 })
                 .join('')}
             </ul>
-            <button data-act="shop" class="min-h-[48px] mt-1 px-4 rounded-xl bg-primary text-on-primary text-title-md flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] no-print">${icon(
-              'add_shopping_cart',
-              'text-[20px]'
-            )}${
-              checked.length
-                ? tr('Hiányzók a bevásárlólistához', 'Restul pe lista de cumpărături')
-                : tr('Összes hozzávaló a bevásárlólistához', 'Toate pe lista de cumpărături')
-            }</button>
-            <div class="flex justify-end no-print">
-              <a href="#/profil?t=lista" class="text-label-sm text-secondary hover:underline flex items-center gap-1">${icon(
-                'shopping_bag',
-                'text-[15px]'
-              )}${tr('Bevásárlólista megnyitása →', 'Vezi lista de cumpărături →')}</a>
-            </div>
-
-            <div class="pt-3 border-t border-outline-variant/30 flex flex-col gap-2 no-print">
-              <div class="flex flex-wrap items-center justify-between gap-1">
-                <span class="text-label-md text-primary flex items-center gap-1.5">${icon(
-                  'checklist_rtl',
-                  'text-secondary text-[18px]'
-                )}${tr('Exportálás pipálható jegyzetként', 'Exportă ca listă cu bife')}</span>
-                <span class="text-label-sm text-on-surface-variant">${tr('Recept pontos nevével', 'Cu numele exact al rețetei')}</span>
-              </div>
-              <div class="grid grid-cols-1 min-[420px]:grid-cols-3 gap-2">
-                <button type="button" data-act="keep" class="min-h-[42px] px-3 rounded-lg bg-secondary-fixed text-on-secondary-fixed text-label-md flex items-center justify-center gap-1.5 shadow-sm hover:opacity-90 active:scale-95 transition">${icon(
-                  'keep',
-                  'text-[16px]'
-                )}Google Keep</button>
-                <button type="button" data-act="notes-share" class="min-h-[42px] px-3 rounded-lg bg-surface-container-high text-primary text-label-md flex items-center justify-center gap-1.5 shadow-sm hover:bg-surface-container-highest active:scale-95 transition">${icon(
-                  'ios_share',
-                  'text-[16px]'
-                )}${tr('Más Notes app', 'Altă aplicație')}</button>
-                <button type="button" data-act="notes-dl" class="min-h-[42px] px-3 rounded-lg bg-surface-container-high text-primary text-label-md flex items-center justify-center gap-1.5 shadow-sm hover:bg-surface-container-highest active:scale-95 transition">${icon(
-                  'download',
-                  'text-[16px]'
-                )}${tr('Mentés (.txt)', 'Salvează (.txt)')}</button>
-              </div>
-              <div id="keepbox" class="hidden bg-surface-container-low rounded-lg p-3 border border-outline-variant/40 flex-col gap-2">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <span class="text-label-sm uppercase tracking-wider text-secondary" id="keepstatus">${tr('Vágólapra másolva – készen áll a beillesztésre', 'Copiat în clipboard – gata de lipit')}</span>
-                  <a href="https://keep.google.com/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-md bg-secondary text-on-secondary text-label-sm flex items-center gap-1 shadow-sm">${tr('Google Keep megnyitása', 'Deschide Google Keep')} ${icon(
-                    'open_in_new',
-                    'text-[13px]'
-                  )}</a>
-                </div>
-                <pre id="keeptext" class="text-body-sm font-mono whitespace-pre-wrap bg-surface-container-lowest p-2.5 rounded border border-outline-variant/30 max-h-44 overflow-y-auto"></pre>
-              </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-1 no-print">
+              <button type="button" id="shop-add-btn" data-act="shop" ${
+                checked.length >= (r.ingredients || []).length && (r.ingredients || []).length > 0
+                  ? 'disabled'
+                  : ''
+              } class="flex-1 min-h-[48px] px-4 rounded-xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary text-[14px] sm:text-title-md font-semibold flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-[transform,opacity,background-color] duration-200">${icon(
+                checked.length >= (r.ingredients || []).length && (r.ingredients || []).length > 0
+                  ? 'done_all'
+                  : 'add_shopping_cart',
+                'text-[20px] shrink-0'
+              )}<span>${
+                checked.length >= (r.ingredients || []).length && (r.ingredients || []).length > 0
+                  ? tr('Minden hozzávaló kipipálva', 'Toate ingredientele sunt bifate')
+                  : checked.length
+                    ? tr(
+                        `Hiányzók a bevásárlólistához (${Math.max(0, (r.ingredients || []).length - checked.length)})`,
+                        `Adaugă lipsă pe listă (${Math.max(0, (r.ingredients || []).length - checked.length)})`
+                      )
+                    : tr(
+                        `Összes hozzávaló a bevásárlólistához (${(r.ingredients || []).length})`,
+                        `Toate pe lista de cumpărături (${(r.ingredients || []).length})`
+                      )
+              }</span></button>
+              <button type="button" data-act="open-shop" class="min-h-[48px] px-4 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/45 text-primary text-label-md sm:text-title-md font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition shrink-0">
+                ${icon('shopping_bag', 'text-[18px] text-secondary shrink-0')}
+                <span>${tr('Lista', 'Listă')}</span>
+                <span data-shop-badge class="${
+                  S.shopping.filter(it => !it.checked).length > 0 ? 'inline-flex' : 'hidden'
+                } min-w-[20px] h-5 px-1.5 rounded-full bg-secondary text-on-secondary text-[11px] font-bold items-center justify-center leading-none">${
+                  S.shopping.filter(it => !it.checked).length
+                }</span>
+              </button>
             </div>
           </section>
 
@@ -2205,19 +2281,32 @@ export function App() {
               r.prep + r.cook
             } ${minsWord()}</p></div>
           </div>
-          ${
-            isLocked
-              ? `<button type="button" data-act="scroll" data-target="paywall-section" class="min-h-[44px] px-3.5 sm:px-5 rounded-full bg-secondary text-on-secondary text-label-md sm:text-title-md flex items-center gap-1.5 shadow-md whitespace-nowrap shrink-0 active:scale-95 transition">${icon(
-                  'workspace_premium',
-                  'fill text-[18px]'
-                )}${tr('Prémium feloldása', 'Deblochează')}</button>`
-              : `<a href="#/fozes/${encodeURIComponent(
-                  r.id
-                )}/${startStep}" data-replace class="min-h-[44px] px-3.5 sm:px-5 rounded-full bg-secondary text-on-secondary text-label-md sm:text-title-md flex items-center gap-1.5 shadow-md whitespace-nowrap shrink-0 active:scale-95 transition">${icon(
-                  'play_arrow',
-                  'fill text-[20px]'
-                )}${hasProg ? `${tr('Folytatás', 'Continuă')} (${prog}/${r.steps.length})` : tr('Főzés indítása', 'Începe gătitul')}</a>`
-          }
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" data-act="open-shop" aria-label="${tr(
+              'Bevásárlólista megnyitása',
+              'Deschide lista de cumpărături'
+            )}" class="relative w-11 h-11 rounded-full bg-surface-container-low hover:bg-surface-container border border-outline-variant/45 text-primary flex items-center justify-center shadow-sm active:scale-95 transition shrink-0">
+              ${icon('shopping_bag', 'text-[20px] text-primary')}
+              <span data-shop-badge class="${
+                S.shopping.filter(it => !it.checked).length > 0 ? 'inline-flex' : 'hidden'
+              } absolute -top-1 -right-1 min-w-[19px] h-[19px] px-1 rounded-full bg-secondary text-on-secondary text-[10px] font-bold items-center justify-center shadow-sm leading-none">${
+                S.shopping.filter(it => !it.checked).length
+              }</span>
+            </button>
+            ${
+              isLocked
+                ? `<button type="button" data-act="scroll" data-target="paywall-section" class="min-h-[44px] px-3.5 sm:px-5 rounded-full bg-secondary text-on-secondary text-label-md sm:text-title-md flex items-center gap-1.5 shadow-md whitespace-nowrap shrink-0 active:scale-95 transition">${icon(
+                    'workspace_premium',
+                    'fill text-[18px]'
+                  )}${tr('Prémium feloldása', 'Deblochează')}</button>`
+                : `<a href="#/fozes/${encodeURIComponent(
+                    r.id
+                  )}/${startStep}" data-replace class="min-h-[44px] px-3.5 sm:px-5 rounded-full bg-secondary text-on-secondary text-label-md sm:text-title-md flex items-center gap-1.5 shadow-md whitespace-nowrap shrink-0 active:scale-95 transition">${icon(
+                    'play_arrow',
+                    'fill text-[20px]'
+                  )}${hasProg ? `${tr('Folytatás', 'Continuă')} (${prog}/${r.steps.length})` : tr('Főzés indítása', 'Începe gătitul')}</a>`
+            }
+          </div>
         </div>
       </div>`
       );
@@ -2697,46 +2786,212 @@ export function App() {
                 '#/',
                 tr('Receptek böngészése', 'Răsfoiește rețetele')
               ),
-        lista: () =>
-          S.shopping.length
-            ? `<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4">
-            <ul class="divide-y divide-outline-variant/40">${S.shopping
-              .map(
-                (s, i) => `<li class="flex items-center gap-3 py-2.5">
-              <button data-act="shopdel" data-i="${i}" aria-label="${tr('Megvan:', 'Luat:')} ${esc(
-                  s.text
-                )}" class="w-5 h-5 rounded-[6px] border-[1.5px] border-outline flex-shrink-0 hover:bg-primary-fixed"></button>
-              <span class="flex-1">${esc(
-                s.text
-              )}</span><span class="text-label-sm text-on-surface-variant text-right">${esc(
-                  s.from
-                )}</span></li>`
-              )
-              .join('')}</ul>
-            <div class="grid grid-cols-1 min-[340px]:grid-cols-2 gap-2 mt-3">
-              <button data-act="shopcopy" class="min-h-[42px] px-3 py-2 rounded-xl bg-surface-container text-[13px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug">${icon(
-                'content_copy',
-                'text-[16px] shrink-0'
-              )}<span>${tr('Másolás', 'Copiază')}</span></button>
-              <button data-act="shopclear" class="min-h-[42px] px-3 py-2 rounded-xl bg-error-container text-on-error-container text-[13px] sm:text-label-md font-semibold flex items-center justify-center gap-1.5 text-center leading-snug">${icon(
-                'delete_sweep',
-                'text-[16px] shrink-0'
-              )}<span>${tr('Lista törlése', 'Șterge lista')}</span></button>
-            </div></div>`
-            : empty(
-                tr('A bevásárlólista üres. A receptoldalon a „Hozzávalók a bevásárlólistához” gombbal tölthetsz fel.', 'Lista de cumpărături este goală. Adaugă ingrediente din pagina unei rețete.'),
-                '#/kereses',
-                tr('Receptek böngészése', 'Răsfoiește rețetele')
+        lista: () => {
+          if (!S.shopping.length) {
+            return empty(
+              tr(
+                'A bevásárlólista üres. A receptoldalon a „Hiányzók a bevásárlólistához” gombbal tölthetsz fel.',
+                'Lista de cumpărături este goală. Adaugă ingrediente din pagina unei rețete.'
               ),
+              '#/kereses',
+              tr('Receptek böngészése', 'Răsfoiește rețetele')
+            );
+          }
+          const curExportMode: ChecklistExportMode = shoppingStore.getSnapshot().exportMode;
+          const uncheckedItems = S.shopping.filter(it => !it.checked);
+          const checkedItems = S.shopping.filter(it => it.checked);
+          const checkedCount = checkedItems.length;
+
+          const renderProfileShopRow = (s: ShoppingItem) => {
+            const qtyBadge = formatShoppingQty(s.qty, s.unit, S.unit);
+            const step = s.qty != null ? getSymmetricStep(s.unit, S.unit) : 0;
+            const willRemove = s.qty != null && s.qty <= step;
+            return `<li class="flex items-center justify-between gap-2.5 px-3.5 py-2.5 hover:bg-surface-container-low/45 transition-colors">
+              <button type="button" role="checkbox" aria-checked="${s.checked}" data-act="shoptoggle" data-id="${esc(
+                s.id
+              )}" class="flex items-start gap-2.5 text-left flex-1 min-w-0 py-0.5">
+                <span class="mt-0.5 w-[18px] h-[18px] rounded-[5px] flex items-center justify-center flex-shrink-0 ${
+                  s.checked
+                    ? 'bg-primary text-on-primary'
+                    : 'border-[1.5px] border-outline bg-surface-container-lowest'
+                }">${s.checked ? icon('check', 'text-[14px]') : ''}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-[14px] font-medium leading-snug ${
+                    s.checked ? 'line-through text-outline' : 'text-on-surface'
+                  }">${esc(s.name)}</span>
+                  ${
+                    s.from
+                      ? `<span class="block text-[11px] text-outline leading-tight mt-0.5 truncate">${esc(
+                          s.from
+                        )}</span>`
+                      : ''
+                  }
+                </span>
+              </button>
+              <div class="flex items-center gap-1 shrink-0">
+                ${
+                  s.qty != null
+                    ? `<div class="inline-flex items-center bg-surface-container-low rounded-lg p-0.5 border border-outline-variant/35">
+                        <button type="button" data-act="shopqty" data-id="${esc(s.id)}" data-d="-1" aria-label="${
+                          willRemove
+                            ? tr('Tétel eltávolítása (0)', 'Elimină articolul (0)')
+                            : tr('Mennyiség csökkentése', 'Scade cantitatea')
+                        }" class="w-6 h-6 rounded-md flex items-center justify-center active:scale-90 transition ${
+                          willRemove
+                            ? 'text-error hover:bg-error-container/60'
+                            : 'text-primary hover:bg-surface-container-high'
+                        }">${icon(willRemove ? 'delete' : 'remove', 'text-[14px]')}</button>
+                        <span class="px-1.5 text-[12px] font-semibold tabular-nums text-primary whitespace-nowrap min-w-[48px] text-center">${esc(
+                          qtyBadge
+                        )}</span>
+                        <button type="button" data-act="shopqty" data-id="${esc(s.id)}" data-d="1" aria-label="${tr(
+                          'Mennyiség növelése',
+                          'Crește cantitatea'
+                        )}" class="w-6 h-6 rounded-md text-primary hover:bg-surface-container-high flex items-center justify-center active:scale-90 transition">${icon(
+                          'add',
+                          'text-[14px]'
+                        )}</button>
+                      </div>`
+                    : qtyBadge
+                      ? `<span class="px-2 py-0.5 rounded-md bg-surface-container-low text-[11px] text-on-surface-variant">${esc(
+                          qtyBadge
+                        )}</span>`
+                      : ''
+                }
+                <button type="button" data-act="shopremove" data-id="${esc(s.id)}" aria-label="${tr(
+                  'Törlés:',
+                  'Șterge:'
+                )} ${esc(s.name)}" class="w-7 h-7 rounded-full text-outline/75 hover:text-error flex items-center justify-center">${icon(
+                  'close',
+                  'text-[15px]'
+                )}</button>
+              </div>
+            </li>`;
+          };
+
+          return `<div class="flex flex-col gap-3">
+            <!-- Compact Sticky/Header Action Bar: Keep/Notes Export + Clear -->
+            <div class="rounded-xl bg-surface-container-lowest p-3 border border-outline-variant/35 shadow-sm flex flex-col gap-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">${icon(
+                  'checklist_rtl',
+                  'text-secondary text-[16px]'
+                )}${tr('Pipálható lista exportálása', 'Exportă ca listă cu bife')}</span>
+                <div class="inline-flex rounded-full bg-surface-container p-0.5 text-[10.5px] font-bold border border-outline-variant/30" role="group" aria-label="${tr(
+                  'Export formátum',
+                  'Format export'
+                )}">
+                  <button type="button" data-act="shop-fmt" data-fmt="plain" aria-pressed="${
+                    curExportMode === 'plain'
+                  }" class="px-2.5 py-0.5 rounded-full transition ${
+                    curExportMode === 'plain'
+                      ? 'bg-primary text-on-primary shadow-sm'
+                      : 'text-on-surface-variant'
+                  }">Keep / Notes</button>
+                  <button type="button" data-act="shop-fmt" data-fmt="markdown" aria-pressed="${
+                    curExportMode === 'markdown'
+                  }" class="px-2.5 py-0.5 rounded-full transition ${
+                    curExportMode === 'markdown'
+                      ? 'bg-primary text-on-primary shadow-sm'
+                      : 'text-on-surface-variant'
+                  }">- [ ] MD</button>
+                </div>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button type="button" data-act="keep" class="flex-1 min-w-[120px] min-h-[38px] px-3 rounded-lg bg-secondary-fixed text-on-secondary-fixed text-label-md font-semibold flex items-center justify-center gap-1.5 shadow-sm hover:opacity-90 active:scale-95 transition">${icon(
+                  'keep',
+                  'text-[16px]'
+                )}Google Keep</button>
+                <button type="button" data-act="notes-share" class="flex-1 min-w-[120px] min-h-[38px] px-3 rounded-lg bg-surface-container-low border border-outline-variant/45 text-primary text-label-md font-semibold flex items-center justify-center gap-1.5 hover:bg-surface-container active:scale-95 transition">${icon(
+                  'ios_share',
+                  'text-[16px]'
+                )}${tr('Notes / Másolás', 'Notes / Copiază')}</button>
+                <button type="button" data-act="notes-dl" title="${tr(
+                  'Mentés .txt fájlként',
+                  'Salvează ca fișier .txt'
+                )}" aria-label="${tr(
+                  'Mentés .txt fájlként',
+                  'Salvează ca fișier .txt'
+                )}" class="w-9 h-[38px] rounded-lg bg-surface-container-low border border-outline-variant/45 text-primary hover:bg-surface-container flex items-center justify-center active:scale-95 transition shrink-0">${icon(
+                  'download',
+                  'text-[17px]'
+                )}</button>
+                <button type="button" data-act="shopclear" title="${tr(
+                  'Teljes lista törlése',
+                  'Șterge întreaga listă'
+                )}" aria-label="${tr(
+                  'Teljes lista törlése',
+                  'Șterge întreaga listă'
+                )}" class="w-9 h-[38px] rounded-lg bg-error-container/75 hover:bg-error-container text-on-error-container flex items-center justify-center active:scale-95 transition shrink-0">${icon(
+                  'delete_sweep',
+                  'text-[17px]'
+                )}</button>
+              </div>
+              <div id="keepbox" class="hidden bg-surface-container-low rounded-lg p-2.5 border border-outline-variant/35 flex-col gap-1.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="text-[11px] font-semibold text-secondary" id="keepstatus">${tr(
+                    'Vágólapra másolva – készen áll a beillesztésre',
+                    'Copiat în clipboard – gata de lipit'
+                  )}</span>
+                  <a href="https://keep.google.com/" target="_blank" rel="noopener noreferrer" class="px-2 py-0.5 rounded bg-secondary text-on-secondary text-[11px] font-semibold flex items-center gap-1">${tr(
+                    'Keep megnyitása',
+                    'Deschide Keep'
+                  )} ${icon('open_in_new', 'text-[12px]')}</a>
+                </div>
+                <pre id="keeptext" class="text-[12px] font-mono whitespace-pre-wrap bg-surface-container-lowest p-2 rounded border border-outline-variant/30 max-h-36 overflow-y-auto"></pre>
+              </div>
+            </div>
+
+            ${
+              uncheckedItems.length > 0
+                ? `<ul class="bg-surface-container-lowest rounded-xl border border-outline-variant/35 shadow-sm divide-y divide-outline-variant/30 overflow-hidden">${uncheckedItems
+                    .map(renderProfileShopRow)
+                    .join('')}</ul>`
+                : ''
+            }
+
+            ${
+              checkedCount > 0
+                ? `<div class="flex flex-col gap-1.5">
+                    <div class="px-1 flex items-center justify-between gap-2">
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-outline">${tr(
+                        `Megvan (${checkedCount})`,
+                        `Bifate (${checkedCount})`
+                      )}</span>
+                      <button type="button" data-act="shopclearchecked" class="text-[11px] font-semibold text-secondary hover:underline flex items-center gap-1">${icon(
+                        'done_all',
+                        'text-[14px]'
+                      )}<span>${tr('Kipipáltak törlése', 'Șterge bifate')}</span></button>
+                    </div>
+                    <ul class="bg-surface-container-low/65 rounded-xl border border-outline-variant/25 divide-y divide-outline-variant/25 overflow-hidden">${checkedItems
+                      .map(renderProfileShopRow)
+                      .join('')}</ul>
+                  </div>`
+                : ''
+            }
+          </div>`;
+        },
       };
 
+      const liveClerk = clerkRef.current;
+      const authReady = isAuthReady();
       const signedIn = isUserSignedIn();
       const uName = activeUserName() || '';
-      const uEmail = clerk.enabled
-        ? clerk.isSignedIn
-          ? clerk.email || ''
+      const uEmail = liveClerk.enabled
+        ? liveClerk.isSignedIn
+          ? liveClerk.email || ''
           : ''
         : S.user?.email || '';
+
+      if (!authReady) {
+        return (
+          titleHeader(tr('Profil & Előfizetés', 'Profil & Abonament')) +
+          `<div class="${NARROW_X} py-24 flex flex-col items-center justify-center gap-3 text-center text-on-surface-variant">
+            ${icon('progress_activity', 'animate-spin text-secondary text-[28px]')}
+            <p class="text-body-sm">${tr('Munkamenet és előfizetés szinkronizálása...', 'Se sincronizează sesiunea și abonamentul...')}</p>
+          </div>`
+        );
+      }
 
       return (
         titleHeader(tr('Profil & Előfizetés', 'Profil & Abonament')) +
@@ -3094,8 +3349,8 @@ export function App() {
         </div>
 
         ${
-          clerk.enabled
-            ? clerk.isSignedIn
+          clerkRef.current.enabled
+            ? clerkRef.current.isSignedIn
               ? `<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm text-center border border-outline-variant/30 flex flex-col items-center gap-2">
                   <p class="text-title-md text-primary">${tr('Bejelentkezve, átirányítás...', 'Autentificat, redirecționare...')}</p>
                 </div>`
@@ -3437,6 +3692,7 @@ export function App() {
       S.langSelected = true;
       langMenuOpen = false;
       save();
+      shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
       document.documentElement.lang = S.lang;
       if (location.search.includes('clear') || location.search.includes('lang=')) {
         const sp = new URLSearchParams(location.search);
@@ -3536,32 +3792,103 @@ export function App() {
         save();
         render(true);
       },
-      shop: () => {
+      'open-shop': () => {
+        shoppingStore.openDrawer();
+      },
+      shop: el => {
         const r = get(route().p[1]);
         if (!r || !r.ingredients) return;
         const checked = S.checked[r.id] || [];
-        const items = r.ingredients
-          .filter((_: any, i: number) => !checked.includes(i))
-          .map((ing: any) => ({
-            text: `${ing.qty == null ? '' : amountText(ing, r) + ' '}${ing.name}`.trim(),
-            from: r.short || r.title,
-          }));
-        if (!items.length) return toast(tr('Minden hozzávaló ki van pipálva', 'Toate ingredientele sunt bifate'));
-        const fresh = items.filter(
-          (it: any) => !S.shopping.some(s => s.text === it.text && s.from === it.from)
-        );
-        S.shopping.push(...fresh);
+        const missingCount = r.ingredients.filter((_: any, i: number) => !checked.includes(i)).length;
+        if (!missingCount) {
+          return toast(tr('Minden hozzávaló ki van pipálva', 'Toate ingredientele sunt bifate'));
+        }
+
+        const servingsMultiplier = servingsOf(r) / (r.servings || 2);
+        const result = mergeRecipeIngredientsIntoList({
+          existing: S.shopping,
+          ingredients: r.ingredients,
+          checkedIndices: checked,
+          recipeId: r.id,
+          recipeTitle: r.short || r.title,
+          servingsMultiplier,
+          unitSystem: S.unit,
+        });
+
+        S.shopping = result.items;
         save();
-        toast(
-          fresh.length
-            ? tr(`${fresh.length} tétel a bevásárlólistán`, `${fresh.length} articole adăugate în listă`)
-            : tr('Már minden a bevásárlólistán van', 'Totul este deja pe listă')
-        );
+        const changedTotal = result.addedCount + result.mergedCount;
+        shoppingStore.syncFromApp(S.shopping, S.lang, S.unit, changedTotal > 0);
+
+        // Lightweight GPU button transition to checkmark state
+        const btn = (el.id === 'shop-add-btn'
+          ? el
+          : document.getElementById('shop-add-btn')) as HTMLButtonElement | null;
+        if (btn) {
+          const originalHtml = btn.innerHTML;
+          if (shopBtnResetTimer) clearTimeout(shopBtnResetTimer);
+          btn.classList.remove('shop-btn-added');
+          void btn.offsetWidth;
+          btn.classList.add('shop-btn-added');
+          btn.innerHTML = `${icon('check_circle', 'fill text-[20px] text-secondary-fixed shrink-0')}<span>${
+            result.addedCount > 0 && result.mergedCount > 0
+              ? tr(
+                  `${result.addedCount} új + ${result.mergedCount} összevont tétel!`,
+                  `${result.addedCount} noi + ${result.mergedCount} cumulate!`
+                )
+              : result.addedCount > 0
+                ? tr(
+                    `${result.addedCount} tétel hozzáadva!`,
+                    `${result.addedCount} articole adăugate!`
+                  )
+                : result.mergedCount > 0
+                  ? tr(
+                      `${result.mergedCount} tétel mennyisége frissítve!`,
+                      `${result.mergedCount} cantități actualizate!`
+                    )
+                  : tr('Már szerepel a listán', 'Deja pe listă')
+          }</span>`;
+          shopBtnResetTimer = setTimeout(() => {
+            if (btn.isConnected) {
+              btn.classList.remove('shop-btn-added');
+              btn.innerHTML = originalHtml;
+            }
+          }, 1600);
+        }
+
+        const summaryMsg =
+          result.addedCount > 0 && result.mergedCount > 0
+            ? tr(
+                `${result.addedCount} új és ${result.mergedCount} összevont tétel a listán`,
+                `${result.addedCount} noi și ${result.mergedCount} cumulate în listă`
+              )
+            : result.addedCount > 0
+              ? tr(
+                  `${result.addedCount} tétel a bevásárlólistán`,
+                  `${result.addedCount} articole adăugate în listă`
+                )
+              : result.mergedCount > 0
+                ? tr(
+                    `${result.mergedCount} tétel mennyisége összeadva`,
+                    `${result.mergedCount} cantități cumulate în listă`
+                  )
+                : tr('Már minden tétel a bevásárlólistán van', 'Toate articolele sunt deja pe listă');
+
+        shoppingStore.showActionToast(summaryMsg, tr('Lista megnyitása', 'Vezi lista'));
+      },
+      'shop-fmt': el => {
+        const fmt: ChecklistExportMode = el.dataset.fmt === 'markdown' ? 'markdown' : 'plain';
+        shoppingStore.setExportMode(fmt);
+        render(true);
       },
       keep: async () => {
-        const r = get(route().p[1]);
-        if (!r) return;
-        const text = formatNotesText(r, 'keep');
+        if (!S.shopping.length) return;
+        shoppingStore.setExportMode('plain');
+        const text = formatShoppingChecklist(S.shopping, {
+          mode: 'plain',
+          unitSystem: S.unit,
+          includeChecked: false,
+        });
         const box = document.getElementById('keepbox'),
           pre = document.getElementById('keeptext'),
           st = document.getElementById('keepstatus');
@@ -3574,8 +3901,8 @@ export function App() {
           await navigator.clipboard.writeText(text);
           if (st)
             st.textContent = tr(
-              'Google Keep pipálható lista a vágólapon (Ctrl+V a beillesztéshez)',
-              'Listă cu bife Google Keep copiată în clipboard (Ctrl+V pentru lipire)'
+              'Google Keep lista a vágólapon (illeszd be lista-jegyzetbe!)',
+              'Listă Google Keep copiată în clipboard (lipește într-o listă!)'
             );
           toast(
             tr(
@@ -3588,9 +3915,13 @@ export function App() {
         }
       },
       'notes-share': async () => {
-        const r = get(route().p[1]);
-        if (!r) return;
-        const text = formatNotesText(r, 'md');
+        if (!S.shopping.length) return;
+        const mode = shoppingStore.getSnapshot().exportMode;
+        const text = formatShoppingChecklist(S.shopping, {
+          mode,
+          unitSystem: S.unit,
+          includeChecked: false,
+        });
         const box = document.getElementById('keepbox'),
           pre = document.getElementById('keeptext'),
           st = document.getElementById('keepstatus');
@@ -3600,33 +3931,51 @@ export function App() {
           box.classList.add('flex');
         }
         try {
-          await navigator.clipboard.writeText(text);
-        } catch {}
+          if (typeof navigator.share === 'function') {
+            await navigator.share({ text });
+          } else {
+            await navigator.clipboard.writeText(text);
+          }
+        } catch {
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch {}
+        }
         if (st)
-          st.textContent = tr(
-            'Markdown pipálható lista (- [ ]) a vágólapon (Apple Notes / Notion)',
-            'Listă Markdown (- [ ]) copiată în clipboard (Apple Notes / Notion)'
-          );
+          st.textContent =
+            mode === 'markdown'
+              ? tr(
+                  'Markdown (- [ ]) pipálható lista a vágólapon (Notion / Obsidian)',
+                  'Listă Markdown (- [ ]) copiată în clipboard (Notion / Obsidian)'
+                )
+              : tr(
+                  'Tiszta soronkénti lista a vágólapon (Apple Notes / Keep)',
+                  'Listă curată pe rânduri în clipboard (Apple Notes / Keep)'
+                );
         toast(
           tr(
-            'Pipálható jegyzet a vágólapon (Apple Notes, Notion, Keep)',
-            'Listă copiată în clipboard (Apple Notes, Notion, Keep)'
+            'Bevásárlólista a vágólapon (Keep, Apple Notes, Notion)',
+            'Listă copiată în clipboard (Keep, Apple Notes, Notion)'
           )
         );
       },
       'notes-dl': () => {
-        const r = get(route().p[1]);
-        if (!r) return;
-        const text = formatNotesText(r, 'keep');
-        const safeName = r.title.replace(/[\\/:*?"<>|]+/g, '-').trim() || tr('recept', 'reteta');
+        if (!S.shopping.length) return;
+        const mode = shoppingStore.getSnapshot().exportMode;
+        const text = formatShoppingChecklist(S.shopping, {
+          mode,
+          unitSystem: S.unit,
+          includeChecked: false,
+        });
+        const fileName = `vebeat-bevasarlolista-${new Date().toISOString().slice(0, 10)}.txt`;
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         const a = Object.assign(document.createElement('a'), {
           href: URL.createObjectURL(blob),
-          download: `${safeName}.txt`,
+          download: fileName,
         });
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-        toast(tr(`Pipálható lista letöltve: ${safeName}.txt`, `Listă descărcată: ${safeName}.txt`));
+        toast(tr(`Bevásárlólista letöltve: ${fileName}`, `Listă descărcată: ${fileName}`));
       },
       resetprog: el => {
         const id = el.dataset.id!;
@@ -3704,22 +4053,57 @@ export function App() {
         save();
         goReplace(`#/fozes/${encodeURIComponent(id)}/kesz`);
       },
+      shoptoggle: el => {
+        const id = el.dataset.id!;
+        S.shopping = S.shopping.map(it => (it.id === id ? { ...it, checked: !it.checked } : it));
+        save();
+        shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
+        render(true);
+      },
+      shopqty: el => {
+        const id = el.dataset.id!;
+        const dir: 1 | -1 = Number(el.dataset.d) < 0 ? -1 : 1;
+        S.shopping = applySymmetricQtyStep(S.shopping, id, dir, S.unit);
+        save();
+        shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
+        render(true);
+      },
+      shopremove: el => {
+        const id = el.dataset.id!;
+        S.shopping = S.shopping.filter(it => it.id !== id);
+        save();
+        shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
+        render(true);
+      },
+      shopclearchecked: () => {
+        S.shopping = S.shopping.filter(it => !it.checked);
+        save();
+        shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
+        render(true);
+      },
       shopdel: el => {
         S.shopping.splice(+el.dataset.i!, 1);
         save();
+        shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
         render(true);
       },
       shopclear: () => {
         if (confirm(tr('Törlöd a teljes bevásárlólistát?', 'Ștergi întreaga listă de cumpărături?'))) {
           S.shopping = [];
           save();
+          shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
           render(true);
         }
       },
       shopcopy: async () => {
         try {
-          await navigator.clipboard.writeText(S.shopping.map(s => '• ' + s.text).join('\n'));
-          toast(tr('Lista a vágólapon', 'Lista a fost copiată'));
+          const text = formatShoppingChecklist(S.shopping, {
+            mode: shoppingStore.getSnapshot().exportMode,
+            unitSystem: S.unit,
+            includeChecked: false,
+          });
+          await navigator.clipboard.writeText(text);
+          toast(tr('Pipálható lista a vágólapon', 'Lista cu bife a fost copiată'));
         } catch {
           toast(tr('A másolás nem sikerült', 'Copierea a eșuat'));
         }
@@ -3738,7 +4122,9 @@ export function App() {
       },
       unit: () => {
         S.unit = S.unit === 'dkg' ? 'metric' : 'dkg';
+        S.shopping = normalizeStoredShoppingList(S.shopping, S.unit);
         save();
+        shoppingStore.syncFromApp(S.shopping, S.lang, S.unit);
         toast(
           S.unit === 'dkg'
             ? tr('Mértékegység: dkg / dl', 'Unități: dkg / dl')
@@ -3773,8 +4159,8 @@ export function App() {
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       },
       logout: async () => {
-        if (clerk.enabled && clerk.isSignedIn) {
-          await clerk.signOut();
+        if (clerkRef.current.enabled && clerkRef.current.isSignedIn) {
+          await clerkRef.current.signOut();
         }
         S.user = null;
         currentSubscriptionStatus = 'free';
@@ -3816,6 +4202,7 @@ export function App() {
         localStorage.removeItem(KEY);
         S = { ...DEF, lang: keepLang, langSelected: true, cookieConsent: 'essential' };
         save();
+        shoppingStore.syncFromApp([], S.lang, S.unit);
         toast(tr('Minden helyi személyes adat törölve (GDPR 17. cikk)', 'Toate datele locale au fost șterse (GDPR art. 17)'));
         goReplace('#/');
       },
@@ -3956,22 +4343,60 @@ export function App() {
         [page, id, extra] = rt.p;
       if (!keepScroll) recordNav(location.hash || '#/');
 
-      if (rt.q.get('checkout') === 'success') {
-        const checkoutSessionId = rt.q.get('session_id') || '';
+      const isCheckoutSuccess =
+        rt.q.get('checkout') === 'success' || Boolean(pendingCheckoutRef.current?.active);
+
+      if (isCheckoutSuccess && isAuthReady()) {
+        const checkoutSessionId =
+          rt.q.get('session_id') || pendingCheckoutRef.current?.sessionId || '';
+        pendingCheckoutRef.current = { active: false, sessionId: '' };
+
+        // Clean checkout & session_id query params only AFTER auth has hydrated, preserving pathname + search
+        const cleanParams = new URLSearchParams(rt.q);
+        cleanParams.delete('session_id');
+        cleanParams.delete('checkout');
+        const cleanQs = cleanParams.toString();
+        const cleanHash = `#/${rt.p.join('/')}${cleanQs ? '?' + cleanQs : ''}`;
+        history.replaceState(null, '', `${location.pathname}${location.search}${cleanHash}`);
+
         Object.keys(recipeDetailsCache).forEach(k => delete recipeDetailsCache[k]);
-        if (checkoutSessionId) {
-          const cleanParams = new URLSearchParams(rt.q);
-          cleanParams.delete('session_id');
-          const cleanQs = cleanParams.toString();
-          history.replaceState(null, '', `#/${rt.p.join('/')}${cleanQs ? '?' + cleanQs : ''}`);
-          await syncMeAndRecipes(checkoutSessionId);
-        } else if (!hasSub()) {
-          await syncMeAndRecipes();
+        await syncMeAndRecipes(checkoutSessionId, true);
+
+        // Handle redirect-vs-webhook race condition with bounded short backoff if not yet active
+        if (isUserSignedIn() && !hasSub()) {
+          for (let attempt = 0; attempt < 2 && !hasSub() && !cancelled; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 900));
+            if (cancelled) return;
+            await syncMeAndRecipes(checkoutSessionId, true);
+          }
         }
+        Object.keys(recipeDetailsCache).forEach(k => delete recipeDetailsCache[k]);
+
+        if (hasSub()) {
+          toast(
+            tr(
+              'Sikeres előfizetés! Minden prémium recept feloldva.',
+              'Abonament reușit! Toate rețetele premium sunt deblocate.'
+            )
+          );
+        } else if (!isUserSignedIn()) {
+          toast(
+            tr(
+              'Kérlek jelentkezz be az előfizetés aktiválásához.',
+              'Te rugăm să te autentifici pentru activarea abonamentului.'
+            )
+          );
+        }
+      } else if (rt.q.get('checkout') === 'canceled' && isAuthReady()) {
+        const cleanParams = new URLSearchParams(rt.q);
+        cleanParams.delete('checkout');
+        const cleanQs = cleanParams.toString();
+        const cleanHash = `#/${rt.p.join('/')}${cleanQs ? '?' + cleanQs : ''}`;
+        history.replaceState(null, '', `${location.pathname}${location.search}${cleanHash}`);
         toast(
           tr(
-            'Sikeres előfizetés! Minden prémium recept feloldva.',
-            'Abonament reușit! Toate rețetele premium sunt deblocate.'
+            'A fizetési folyamat megszakadt.',
+            'Procesul de plată a fost anulat.'
           )
         );
       }
@@ -3981,7 +4406,7 @@ export function App() {
         showTabs = true,
         showFooter = true;
 
-      if (!S.langSelected) {
+      if (!S.langSelected || (isCheckoutSuccess && !isAuthReady())) {
         html =
           brandHeader() +
           `<div class="${PAGE_X} py-24 flex flex-col items-center justify-center gap-3 text-center text-on-surface-variant">
@@ -4020,7 +4445,7 @@ export function App() {
           : 'aszf';
         const legal = viewLegalContent(sec, S.lang, {
           cookieConsent: S.cookieConsent,
-          userEmail: (clerk.enabled && clerk.email) || S.user?.email || null,
+          userEmail: (clerkRef.current.enabled && clerkRef.current.email) || S.user?.email || null,
           userName: activeUserName(),
           hasSub: hasSub(),
         });
@@ -4050,7 +4475,10 @@ export function App() {
       }
 
       const mountClerkAuth =
-        clerk.enabled && S.langSelected && page === 'belepes' && !clerk.isSignedIn;
+        clerkRef.current.enabled &&
+        S.langSelected &&
+        page === 'belepes' &&
+        !clerkRef.current.isSignedIn;
       const clerkReg = rt.q.get('m') === 'reg';
       setClerkAuthView(prev =>
         prev.open === mountClerkAuth && prev.reg === clerkReg
@@ -4117,18 +4545,25 @@ export function App() {
     navigator.serviceWorker?.register('/sw.js').catch(() => {});
 
     // Initial load: resolve visitor language automatically via IP geo lookup on first visit,
-    // or use saved/URL language right away, then sync profile & recipes.
+    // wait for Clerk session hydration when enabled, then sync profile & recipes.
     let cancelled = false;
-    const rtInit = route();
-    const initSessionId =
-      rtInit.q.get('checkout') === 'success' ? rtInit.q.get('session_id') || '' : '';
 
     const finishBoot = async () => {
       if (cancelled) return;
-      await syncMeAndRecipes(initSessionId);
-      if (cancelled) return;
+      if (clerkRef.current.enabled && !clerkRef.current.isLoaded) {
+        render();
+        return;
+      }
+      const rtInit = route();
+      const isCheckoutReturn =
+        rtInit.q.get('checkout') === 'success' || Boolean(pendingCheckoutRef.current?.active);
+
+      if (!isCheckoutReturn) {
+        await syncMeAndRecipes('', isUserSignedIn());
+        if (cancelled) return;
+      }
       const rtAfter = route();
-      if (clerk.enabled && clerk.isSignedIn && rtAfter.p[0] === 'belepes') {
+      if (clerkRef.current.enabled && clerkRef.current.isSignedIn && rtAfter.p[0] === 'belepes') {
         const ret = rtAfter.q.get('return') || '';
         goReplace(
           ret === 'elofizetes'
@@ -4172,6 +4607,8 @@ export function App() {
 
     return () => {
       cancelled = true;
+      if (shopBtnResetTimer) clearTimeout(shopBtnResetTimer);
+      shoppingStore.registerAppBridge(null);
       setClerkAuthView({ open: false, reg: false });
       $app.removeEventListener('click', onClick);
       $app.removeEventListener('change', onChange);
@@ -4180,7 +4617,7 @@ export function App() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('hashchange', onHashChange);
     };
-  }, [clerk.isLoaded, clerk.isSignedIn, clerk.userId]);
+  }, [clerk.isLoaded, clerk.isSignedIn, clerk.userId, clerk.email, clerk.fullName]);
 
   return (
     <div className="w-full min-h-[100dvh] relative bg-surface">
@@ -4256,6 +4693,7 @@ export function App() {
           </a>
         </div>
       </nav>
+      <ShoppingDrawerAndToast />
       <div className="fixed-floating-overlay bottom-24 z-50 px-4 flex justify-center pointer-events-none">
         <div
           id="toast"

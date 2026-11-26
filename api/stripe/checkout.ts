@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { verifyClerkRequest } from '../_lib/auth.js';
+import { verifyClerkRequest, resolveAppOrigin } from '../_lib/auth.js';
 import { getUserById, upsertUserSubscription } from '../../src/db/index.js';
 
 export default async function handler(req: any, res: any) {
@@ -23,7 +23,7 @@ export default async function handler(req: any, res: any) {
 
     // Ensure user record exists in Vercel Postgres `users` table
     const existingUser = await getUserById(authUser.userId);
-    const dbUser =
+    let dbUser =
       existingUser ||
       (await upsertUserSubscription({
         id: authUser.userId,
@@ -37,9 +37,7 @@ export default async function handler(req: any, res: any) {
         ? process.env.STRIPE_PRICE_ID_YEARLY || process.env.STRIPE_PRICE_ID_MONTHLY
         : process.env.STRIPE_PRICE_ID_MONTHLY;
 
-    const origin =
-      process.env.APP_URL ||
-      (req.headers?.origin ? String(req.headers.origin) : 'http://localhost:5173');
+    const origin = resolveAppOrigin(req);
 
     if (!stripeSecret || stripeSecret.startsWith('sk_test_...')) {
       // Local dev preview when Stripe API keys are not yet filled in .env
@@ -68,6 +66,58 @@ export default async function handler(req: any, res: any) {
 
     const stripe = new Stripe(stripeSecret);
 
+    // Ensure a valid Stripe Customer is linked to the user BEFORE redirect so customer ID mapping is never lost
+    let customerId =
+      dbUser.stripe_customer_id && !dbUser.stripe_customer_id.startsWith('cus_dev_')
+        ? dbUser.stripe_customer_id
+        : null;
+
+    if (customerId) {
+      try {
+        const existingCust = await stripe.customers.retrieve(customerId);
+        if ((existingCust as any).deleted) {
+          customerId = null;
+        }
+      } catch {
+        customerId = null;
+      }
+    }
+
+    if (!customerId) {
+      if (authUser.email && !authUser.email.endsWith('@clerk.user')) {
+        const found = await stripe.customers.list({ email: authUser.email, limit: 5 });
+        const reusable = found.data.find(
+          c =>
+            !(c as any).deleted &&
+            (!c.metadata?.clerkUserId || c.metadata.clerkUserId === authUser.userId)
+        );
+        if (reusable) {
+          customerId = reusable.id;
+          if (reusable.metadata?.clerkUserId !== authUser.userId) {
+            await stripe.customers.update(reusable.id, {
+              metadata: { ...reusable.metadata, clerkUserId: authUser.userId },
+            });
+          }
+        }
+      }
+
+      if (!customerId) {
+        const created = await stripe.customers.create({
+          ...(authUser.email && !authUser.email.endsWith('@clerk.user')
+            ? { email: authUser.email }
+            : {}),
+          metadata: { clerkUserId: authUser.userId },
+        });
+        customerId = created.id;
+      }
+
+      dbUser = await upsertUserSubscription({
+        id: authUser.userId,
+        email: authUser.email,
+        stripe_customer_id: customerId,
+      });
+    }
+
     const successHash =
       returnSlug && returnSlug !== 'elofizetes'
         ? `#/r/${encodeURIComponent(returnSlug)}?checkout=success&session_id={CHECKOUT_SESSION_ID}`
@@ -81,6 +131,7 @@ export default async function handler(req: any, res: any) {
       mode: 'subscription',
       payment_method_types: ['card'],
       client_reference_id: authUser.userId,
+      customer: customerId,
       metadata: {
         clerkUserId: authUser.userId,
       },
@@ -89,35 +140,34 @@ export default async function handler(req: any, res: any) {
           clerkUserId: authUser.userId,
         },
       },
-      ...(dbUser.stripe_customer_id
-        ? { customer: dbUser.stripe_customer_id }
-        : { customer_email: authUser.email }),
-      line_items: priceId && !priceId.startsWith('price_...')
-        ? [{ price: priceId, quantity: 1 }]
-        : [
-            {
-              price_data: {
-                currency: lang === 'ro' ? 'ron' : 'huf',
-                unit_amount:
-                  lang === 'ro'
-                    ? plan === 'yearly'
-                      ? 23999
-                      : 2999
-                    : plan === 'yearly'
-                      ? 1990000
-                      : 249000,
-                recurring: { interval: plan === 'yearly' ? 'year' : 'month' },
-                product_data: {
-                  name: lang === 'ro' ? 'Abonament Vebeat Premium' : 'Vebeat Prémium Előfizetés',
-                  description:
+      line_items:
+        priceId && !priceId.startsWith('price_...')
+          ? [{ price: priceId, quantity: 1 }]
+          : [
+              {
+                price_data: {
+                  currency: lang === 'ro' ? 'ron' : 'huf',
+                  unit_amount:
                     lang === 'ro'
-                      ? 'Acces nelimitat la toate rețetele premium Vebeat, cantități exacte și Modul Interactiv de Gătit (TVA inclus).'
-                      : 'Korlátlan hozzáférés minden prémium Vebeat recepthez, pontos grammos hozzávalókhoz és az interaktív Főzési Módhoz (ÁFA-val).',
+                      ? plan === 'yearly'
+                        ? 23999
+                        : 2999
+                      : plan === 'yearly'
+                        ? 1990000
+                        : 249000,
+                  recurring: { interval: plan === 'yearly' ? 'year' : 'month' },
+                  product_data: {
+                    name:
+                      lang === 'ro' ? 'Abonament Vebeat Premium' : 'Vebeat Prémium Előfizetés',
+                    description:
+                      lang === 'ro'
+                        ? 'Acces nelimitat la toate rețetele premium Vebeat, cantități exacte și Modul Interactiv de Gătit (TVA inclus).'
+                        : 'Korlátlan hozzáférés minden prémium Vebeat recepthez, pontos grammos hozzávalókhoz és az interaktív Főzési Módhoz (ÁFA-val).',
+                  },
                 },
+                quantity: 1,
               },
-              quantity: 1,
-            },
-          ],
+            ],
       success_url: `${origin}/${successHash}`,
       cancel_url: `${origin}/${cancelHash}`,
     };

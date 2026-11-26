@@ -326,24 +326,51 @@ export async function upsertUserSubscription(params: {
           .where(eq(schema.users.email, insertEmail))
           .limit(1);
 
-        if (byEmail[0] && !byEmail[0].stripeCustomerId && byEmail[0].subscriptionStatus === 'free') {
+        if (byEmail[0]) {
+          const prevRow = byEmail[0];
           await conn.db
             .update(schema.users)
             .set({
               id: params.id,
+              subscriptionStatus:
+                params.subscription_status ?? (prevRow.subscriptionStatus as SubscriptionStatus),
+              stripeCustomerId:
+                params.stripe_customer_id !== undefined
+                  ? params.stripe_customer_id
+                  : prevRow.stripeCustomerId,
+              subscriptionEndDate:
+                params.subscription_end_date !== undefined
+                  ? params.subscription_end_date
+                  : prevRow.subscriptionEndDate,
+            })
+            .where(eq(schema.users.email, insertEmail));
+        } else {
+          await conn.db
+            .insert(schema.users)
+            .values({
+              id: params.id,
+              email: insertEmail,
               subscriptionStatus: status,
               stripeCustomerId: params.stripe_customer_id ?? null,
               subscriptionEndDate: params.subscription_end_date ?? null,
             })
-            .where(eq(schema.users.email, insertEmail));
-        } else {
-          await conn.db.insert(schema.users).values({
-            id: params.id,
-            email: insertEmail,
-            subscriptionStatus: status,
-            stripeCustomerId: params.stripe_customer_id ?? null,
-            subscriptionEndDate: params.subscription_end_date ?? null,
-          });
+            .onConflictDoUpdate({
+              target: schema.users.id,
+              set: {
+                ...(params.email && !isFallbackEmail(params.email, params.id)
+                  ? { email: params.email }
+                  : {}),
+                ...(params.subscription_status !== undefined
+                  ? { subscriptionStatus: params.subscription_status }
+                  : {}),
+                ...(params.stripe_customer_id !== undefined
+                  ? { stripeCustomerId: params.stripe_customer_id }
+                  : {}),
+                ...(params.subscription_end_date !== undefined
+                  ? { subscriptionEndDate: params.subscription_end_date }
+                  : {}),
+              },
+            });
         }
       } else {
         const nextEmail =
